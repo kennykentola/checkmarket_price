@@ -199,6 +199,7 @@ export const TraderAnalytics = () => {
 
   const selectedCommodityName = commodityStats.find(c => c.id === selectedChartCommodity)?.name || 'Commodity';
   const selectedCommodityGlobalAvg = commodityStats.find(c => c.id === selectedChartCommodity)?.avgPrice || 0;
+  const selectedCommodityUnit = commodityStats.find(c => c.id === selectedChartCommodity)?.unit || '';
 
   if (loading) return (
     <div className="flex justify-center items-center h-64">
@@ -265,7 +266,7 @@ export const TraderAnalytics = () => {
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h4 className="text-base font-bold text-gray-900">Price History</h4>
-                  <p className="text-xs text-gray-500">Trend for {selectedCommodityName}</p>
+                  <p className="text-xs text-gray-500">Trend for {selectedCommodityName} (per {selectedCommodityUnit})</p>
                 </div>
                 <div className="p-2 bg-indigo-50 rounded-lg">
                    <TagIcon className="h-5 w-5 text-indigo-600" />
@@ -302,7 +303,7 @@ export const TraderAnalytics = () => {
                <div className="flex items-center justify-between mb-4">
                 <div>
                   <h4 className="text-base font-bold text-gray-900">Market Comparison</h4>
-                  <p className="text-xs text-gray-500">Average price by market for {selectedCommodityName}</p>
+                  <p className="text-xs text-gray-500">Average price by market for {selectedCommodityName} ({selectedCommodityUnit})</p>
                 </div>
                 <div className="p-2 bg-green-50 rounded-lg">
                    <ShoppingBagIcon className="h-5 w-5 text-green-600" />
@@ -322,10 +323,10 @@ export const TraderAnalytics = () => {
                     />
                     <Legend />
                     <ReferenceLine 
-                        y={selectedCommodityGlobalAvg} 
-                        stroke="#EF4444" 
-                        strokeDasharray="3 3"
-                        label={{ value: 'Avg', position: 'right', fill: '#EF4444', fontSize: 12 }} 
+                      y={selectedCommodityGlobalAvg} 
+                      stroke="#EF4444" 
+                      strokeDasharray="3 3"
+                      label={{ value: 'Avg', position: 'right', fill: '#EF4444', fontSize: 12 }} 
                     />
                     <Bar dataKey="avgPrice" name="Avg Price" fill="#10B981" radius={[4, 4, 0, 0]} />
                   </BarChart>

@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useHistory } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { UserRole } from '../types';
 import { 
@@ -22,12 +21,12 @@ import {
 export const Layout = ({ children }: { children?: React.ReactNode }) => {
   const { user, logout } = useAuth();
   const location = useLocation();
-  const navigate = useNavigate();
+  const history = useHistory();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    history.push('/login');
   };
 
   const navItems = [
