@@ -1,4 +1,5 @@
 
+
 export const getItemImage = (name: string, category: string = 'Other', customImage?: string) => {
   // 1. Return custom uploaded image if available
   if (customImage && customImage.trim() !== '') {
@@ -29,6 +30,11 @@ export const getItemImage = (name: string, category: string = 'Other', customIma
   if (n.includes('maggi') || n.includes('spice') || n.includes('curry') || n.includes('thyme')) return 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=600&q=80';
   if (n.includes('bread')) return 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=600&q=80';
   if (n.includes('plantain')) return 'https://images.unsplash.com/photo-1628839077977-160136297395?auto=format&fit=crop&w=600&q=80';
+  
+  // New Categories
+  if (n.includes('ankara') || n.includes('lace') || n.includes('fabric') || n.includes('shirt')) return 'https://images.unsplash.com/photo-1529374255404-311a2a4f1fd9?auto=format&fit=crop&w=600&q=80';
+  if (n.includes('fan') || n.includes('blender') || n.includes('appliance')) return 'https://images.unsplash.com/photo-1571175443880-49e1d58b794a?auto=format&fit=crop&w=600&q=80';
+  if (n.includes('chair') || n.includes('stool') || n.includes('furniture') || n.includes('mattress')) return 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=600&q=80';
 
   // Fallback to Category
   switch (category) {
@@ -42,6 +48,9 @@ export const getItemImage = (name: string, category: string = 'Other', customIma
     case 'Seafood': return 'https://images.unsplash.com/photo-1615141982880-19ed7e6642b8?auto=format&fit=crop&w=600&q=80';
     case 'Spices': return 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=600&q=80';
     case 'Processed': return 'https://images.unsplash.com/photo-1580913428706-c81199602d5c?auto=format&fit=crop&w=600&q=80';
+    case 'Clothing & Textiles': return 'https://images.unsplash.com/photo-1504198458649-3128b932f49e?auto=format&fit=crop&w=600&q=80';
+    case 'Home Appliances': return 'https://images.unsplash.com/photo-1584269600519-112d071b35e6?auto=format&fit=crop&w=600&q=80';
+    case 'Furniture': return 'https://images.unsplash.com/photo-1596162955779-9c8f7b43f0a0?auto=format&fit=crop&w=600&q=80';
     default: return 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=80';
   }
 };

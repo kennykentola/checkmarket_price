@@ -1,9 +1,10 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../services/api';
 import { Commodity, PriceDataExpanded, Market } from '../types';
 import { CommoditySelector } from '../components/CommoditySelector';
-import { FireIcon, MapIcon, ArrowDownIcon, ArrowUpIcon } from '@heroicons/react/24/outline';
+import { FireIcon, MapPinIcon, ArrowDownIcon, ArrowUpIcon, MagnifyingGlassIcon, NoSymbolIcon } from '@heroicons/react/24/outline';
 
 export const Heatmap = () => {
   const [commodities, setCommodities] = useState<Commodity[]>([]);
@@ -11,6 +12,7 @@ export const Heatmap = () => {
   const [allPrices, setAllPrices] = useState<PriceDataExpanded[]>([]);
   const [selectedCommodityId, setSelectedCommodityId] = useState<string>('');
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const loadData = async () => {
@@ -40,15 +42,16 @@ export const Heatmap = () => {
     // Filter prices for selected commodity
     const relevantPrices = allPrices.filter(p => p.commodityId === selectedCommodityId);
     
-    if (relevantPrices.length === 0) return [];
-
+    // Calculate stats only if data exists
     const pricesVal = relevantPrices.map(p => p.price);
-    const minPrice = Math.min(...pricesVal);
-    const maxPrice = Math.max(...pricesVal);
-    const avgPrice = pricesVal.reduce((a, b) => a + b, 0) / pricesVal.length;
+    const minPrice = pricesVal.length > 0 ? Math.min(...pricesVal) : 0;
+    const maxPrice = pricesVal.length > 0 ? Math.max(...pricesVal) : 0;
+    const avgPrice = pricesVal.length > 0 ? pricesVal.reduce((a, b) => a + b, 0) / pricesVal.length : 0;
 
     // Map markets to their price status
-    return markets.map(market => {
+    return markets.filter(m => 
+      searchTerm === '' || m.name.toLowerCase().includes(searchTerm.toLowerCase()) || m.location.toLowerCase().includes(searchTerm.toLowerCase())
+    ).map(market => {
       const priceEntry = relevantPrices.find(p => p.marketId === market.$id);
       
       if (!priceEntry) return { market, hasData: false };
@@ -56,7 +59,6 @@ export const Heatmap = () => {
       const price = priceEntry.price;
       
       // Calculate Intensity (0 = Cheapest, 1 = Most Expensive)
-      // Avoid division by zero if min == max
       const range = maxPrice - minPrice;
       const intensity = range === 0 ? 0.5 : (price - minPrice) / range;
       
@@ -75,21 +77,24 @@ export const Heatmap = () => {
         if (b.hasData) return 1;
         return 0;
     });
-  }, [selectedCommodityId, allPrices, markets]);
+  }, [selectedCommodityId, allPrices, markets, searchTerm]);
 
   // Helper to generate color based on intensity
   // Green (120) -> Yellow (60) -> Red (0)
   const getColor = (intensity: number) => {
     const hue = (1 - intensity) * 120; 
-    return `hsl(${hue}, 80%, 90%)`; // Light pastel background
+    return `hsl(${hue}, 85%, 92%)`; // Soft pastel background
   };
   
   const getBorderColor = (intensity: number) => {
     const hue = (1 - intensity) * 120; 
-    return `hsl(${hue}, 80%, 40%)`; // Darker border
+    return `hsl(${hue}, 70%, 45%)`; // Darker border
   };
 
-  const selectedCommodity = commodities.find(c => c.$id === selectedCommodityId);
+  const getTextColor = (intensity: number) => {
+    const hue = (1 - intensity) * 120; 
+    return `hsl(${hue}, 80%, 25%)`; // Dark readable text
+  };
 
   return (
     <div className="space-y-6">
@@ -99,12 +104,12 @@ export const Heatmap = () => {
           Price Heatmap
         </h1>
         <p className="mt-1 text-sm text-gray-500">
-            Visualize price distribution across Oyo State. Green indicates cheaper markets, while Red indicates expensive ones.
+            Compare prices across Oyo State markets. Green areas indicate lower prices, while Red areas show higher costs.
         </p>
       </div>
 
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-        <div className="max-w-md">
+      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 flex flex-col md:flex-row gap-4 justify-between items-end">
+        <div className="w-full md:w-1/2">
             <CommoditySelector 
                 commodities={commodities}
                 selectedCommodityId={selectedCommodityId}
@@ -112,21 +117,40 @@ export const Heatmap = () => {
                 label="Select Commodity to Map"
             />
         </div>
+        <div className="w-full md:w-1/2">
+          <label className="block text-sm font-medium text-gray-700 mb-1">Filter Markets</label>
+          <div className="relative rounded-md shadow-sm">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
+            </div>
+            <input
+              type="text"
+              className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md p-2 border"
+              placeholder="Search by market name or location..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Heatmap Legend */}
-      <div className="flex items-center justify-center space-x-4 text-sm text-gray-600 bg-white p-3 rounded-md shadow-sm">
+      <div className="flex items-center justify-center space-x-6 text-sm text-gray-600 bg-white p-3 rounded-md shadow-sm border border-gray-100">
          <div className="flex items-center">
-            <div className="w-4 h-4 bg-green-200 border border-green-600 rounded mr-2"></div>
-            <span>Lowest Price</span>
+            <div className="w-6 h-4 bg-green-100 border border-green-600 rounded mr-2"></div>
+            <span>Cheapest</span>
          </div>
          <div className="flex items-center">
-            <div className="w-4 h-4 bg-yellow-200 border border-yellow-600 rounded mr-2"></div>
+            <div className="w-6 h-4 bg-yellow-100 border border-yellow-500 rounded mr-2"></div>
             <span>Average</span>
          </div>
          <div className="flex items-center">
-            <div className="w-4 h-4 bg-red-200 border border-red-600 rounded mr-2"></div>
-            <span>Highest Price</span>
+            <div className="w-6 h-4 bg-red-100 border border-red-600 rounded mr-2"></div>
+            <span>Expensive</span>
+         </div>
+         <div className="flex items-center">
+            <div className="w-6 h-4 bg-gray-50 border border-gray-300 border-dashed rounded mr-2"></div>
+            <span>No Data</span>
          </div>
       </div>
 
@@ -139,25 +163,25 @@ export const Heatmap = () => {
             {heatmapData.map((item) => (
                 <div 
                     key={item.market.$id}
-                    className={`relative rounded-lg p-5 border shadow-sm transition-all duration-300 hover:shadow-md ${!item.hasData ? 'bg-gray-50 border-gray-200 opacity-60' : ''}`}
+                    className={`relative rounded-lg p-5 border transition-all duration-300 ${item.hasData ? 'shadow-sm hover:shadow-md hover:scale-[1.02]' : 'bg-gray-50 border-gray-300 border-dashed opacity-80'}`}
                     style={item.hasData ? {
                         backgroundColor: getColor(item.intensity || 0),
                         borderColor: getBorderColor(item.intensity || 0)
                     } : {}}
                 >
                     <div className="flex justify-between items-start mb-2">
-                        <h3 className="font-bold text-gray-900 line-clamp-1" title={item.market.name}>
+                        <Link to={`/buyer/market/${item.market.$id}`} className={`font-bold line-clamp-1 hover:underline ${item.hasData ? 'text-gray-900' : 'text-gray-500'}`} title={`View details for ${item.market.name}`} style={item.hasData ? { color: getTextColor(item.intensity || 0) } : {}}>
                             {item.market.name}
-                        </h3>
+                        </Link>
                         {item.hasData && (
-                            <span className="text-xs font-semibold px-2 py-0.5 bg-white bg-opacity-60 rounded-full border border-gray-200">
-                                {item.intensity !== undefined && item.intensity < 0.3 ? 'Cheap' : item.intensity !== undefined && item.intensity > 0.7 ? 'Costly' : 'Avg'}
+                            <span className="text-xs font-semibold px-2 py-0.5 bg-white bg-opacity-80 rounded-full border border-gray-200 shadow-sm">
+                                {item.intensity !== undefined && item.intensity < 0.3 ? 'Low' : item.intensity !== undefined && item.intensity > 0.7 ? 'High' : 'Avg'}
                             </span>
                         )}
                     </div>
                     
                     <div className="flex items-center text-xs text-gray-500 mb-3">
-                        <MapIcon className="h-3 w-3 mr-1" />
+                        <MapPinIcon className="h-3 w-3 mr-1" />
                         {item.market.location}
                     </div>
 
@@ -168,31 +192,32 @@ export const Heatmap = () => {
                             </div>
                             <div className="flex items-center mt-1 text-xs">
                                 {item.diffFromAvg !== undefined && item.diffFromAvg < 0 ? (
-                                    <span className="text-green-700 flex items-center font-medium">
+                                    <span className="text-green-700 flex items-center font-bold bg-green-50 px-1 rounded">
                                         <ArrowDownIcon className="h-3 w-3 mr-1"/>
-                                        {Math.abs(item.diffFromAvg).toFixed(1)}% below avg
+                                        {Math.abs(item.diffFromAvg).toFixed(1)}% vs avg
                                     </span>
                                 ) : (
-                                    <span className="text-red-700 flex items-center font-medium">
+                                    <span className="text-red-700 flex items-center font-bold bg-red-50 px-1 rounded">
                                         <ArrowUpIcon className="h-3 w-3 mr-1"/>
-                                        {item.diffFromAvg?.toFixed(1)}% above avg
+                                        {item.diffFromAvg?.toFixed(1)}% vs avg
                                     </span>
                                 )}
                             </div>
-                            <div className="mt-3 text-xs text-gray-500 text-right">
-                                {new Date(item.date!).toLocaleDateString()}
+                            <div className="mt-3 text-xs text-gray-500 text-right opacity-80">
+                                Updated: {new Date(item.date!).toLocaleDateString()}
                             </div>
                         </div>
                     ) : (
-                        <div className="h-16 flex items-center justify-center text-sm text-gray-400 italic">
-                            No data available
+                        <div className="h-24 flex flex-col items-center justify-center text-gray-400">
+                             <NoSymbolIcon className="h-8 w-8 mb-2 opacity-50" />
+                             <span className="text-xs italic">No price data</span>
                         </div>
                     )}
                 </div>
             ))}
             {heatmapData.length === 0 && (
-                 <div className="col-span-full text-center py-10 text-gray-500">
-                     Select a commodity to view price distribution.
+                 <div className="col-span-full text-center py-12 bg-white rounded-lg border border-dashed border-gray-300">
+                     <p className="text-gray-500">No markets found matching your filters.</p>
                  </div>
             )}
         </div>

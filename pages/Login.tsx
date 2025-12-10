@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useHistory, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { UserRole } from '../types';
 
@@ -7,12 +7,12 @@ export const Login = () => {
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<UserRole>(UserRole.BUYER);
   const { login, isLoading } = useAuth();
-  const navigate = useNavigate();
+  const history = useHistory();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     await login(email, role);
-    navigate('/buyer/prices');
+    history.push('/buyer/prices');
   };
 
   return (
