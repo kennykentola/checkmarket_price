@@ -14,7 +14,8 @@ import {
   PresentationChartLineIcon,
   CalculatorIcon,
   TruckIcon,
-  BellIcon
+  BellIcon,
+  FireIcon
 } from '@heroicons/react/24/outline';
 
 export const Layout = ({ children }: { children?: React.ReactNode }) => {
@@ -31,6 +32,7 @@ export const Layout = ({ children }: { children?: React.ReactNode }) => {
   const navItems = [
     { name: 'Overview', path: '/buyer/prices', icon: HomeIcon, roles: [UserRole.BUYER, UserRole.TRADER, UserRole.ADMIN, UserRole.FARMER] },
     { name: 'Compare Prices', path: '/buyer/compare', icon: ChartBarIcon, roles: [UserRole.BUYER, UserRole.TRADER, UserRole.ADMIN, UserRole.FARMER] },
+    { name: 'Price Heatmap', path: '/heatmap', icon: FireIcon, roles: [UserRole.BUYER, UserRole.TRADER, UserRole.ADMIN, UserRole.FARMER] },
     { name: 'Calculator', path: '/calculator', icon: CalculatorIcon, roles: [UserRole.BUYER, UserRole.TRADER, UserRole.ADMIN] },
     
     // Trader Links

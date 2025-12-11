@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { api } from '../../services/api';
 import { Market, Commodity, Category } from '../../types';
 import { 
@@ -30,6 +30,10 @@ export const AdminDashboard = () => {
     categories: 'asc',
     commodities: 'asc'
   });
+
+  // Market Filtering & Sorting State
+  const [marketSortField, setMarketSortField] = useState<'name' | 'location'>('name');
+  const [marketLocationFilter, setMarketLocationFilter] = useState<string>('');
 
   // Market Form State
   const [marketName, setMarketName] = useState('');
@@ -204,7 +208,32 @@ export const AdminDashboard = () => {
     </div>
   );
 
-  const sortedMarkets = getSortedData<Market>(markets, 'markets');
+  // Market List Calculation
+  const uniqueLocations = Array.from(new Set(markets.map(m => m.location))).sort();
+
+  const sortedMarkets = (() => {
+    let data = [...markets];
+    
+    // Filter
+    if (marketLocationFilter) {
+      data = data.filter(m => m.location === marketLocationFilter);
+    }
+
+    // Sort
+    data.sort((a, b) => {
+      const fieldA = a[marketSortField].toLowerCase();
+      const fieldB = b[marketSortField].toLowerCase();
+      
+      if (sortConfig.markets === 'asc') {
+        return fieldA.localeCompare(fieldB);
+      } else {
+        return fieldB.localeCompare(fieldA);
+      }
+    });
+    
+    return data;
+  })();
+
   const sortedCategories = getSortedData<Category>(categories, 'categories');
   const sortedCommodities = getSortedData<Commodity>(commodities, 'commodities');
 
@@ -227,23 +256,51 @@ export const AdminDashboard = () => {
         {/* --- MARKETS SECTION --- */}
         <div className="space-y-6 lg:col-span-1">
           <div className="bg-white shadow rounded-lg overflow-hidden border border-gray-200 h-full flex flex-col">
-            <div className="px-4 py-5 sm:px-6 bg-indigo-50 border-b border-indigo-100 flex items-center justify-between">
-              <div className="flex items-center">
-                <BuildingStorefrontIcon className="h-5 w-5 text-indigo-600 mr-2" />
-                <h3 className="text-lg leading-6 font-medium text-indigo-900">Markets</h3>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                  {markets.length}
-                </span>
-                <button 
-                  onClick={() => toggleSort('markets')}
-                  className="text-indigo-600 hover:text-indigo-800 p-1 rounded hover:bg-indigo-100"
-                  title="Sort A-Z / Z-A"
-                >
-                  {sortConfig.markets === 'asc' ? <BarsArrowUpIcon className="h-4 w-4"/> : <BarsArrowDownIcon className="h-4 w-4"/>}
-                </button>
-              </div>
+            <div className="px-4 py-4 sm:px-6 bg-indigo-50 border-b border-indigo-100">
+                <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center">
+                        <BuildingStorefrontIcon className="h-5 w-5 text-indigo-600 mr-2" />
+                        <h3 className="text-lg leading-6 font-medium text-indigo-900">Markets</h3>
+                    </div>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                    {sortedMarkets.length}
+                    </span>
+                </div>
+                
+                {/* Filters & Sorting */}
+                <div className="flex gap-2">
+                    <div className="relative flex-1">
+                        <select 
+                            value={marketLocationFilter} 
+                            onChange={(e) => setMarketLocationFilter(e.target.value)}
+                            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-xs py-1.5 pl-2 pr-6"
+                        >
+                            <option value="">All Locations</option>
+                            {uniqueLocations.map(loc => (
+                                <option key={loc} value={loc}>{loc}</option>
+                            ))}
+                        </select>
+                    </div>
+                    
+                    <div className="flex rounded-md shadow-sm">
+                         <select
+                            value={marketSortField}
+                            onChange={(e) => setMarketSortField(e.target.value as 'name' | 'location')}
+                            className="rounded-l-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-xs py-1.5 pl-2 pr-6 border-r-0"
+                            title="Sort By"
+                        >
+                            <option value="name">Name</option>
+                            <option value="location">Location</option>
+                        </select>
+                         <button 
+                            onClick={() => toggleSort('markets')}
+                            className="inline-flex items-center rounded-r-md border border-gray-300 bg-white px-2 text-gray-500 hover:bg-gray-50 focus:border-indigo-500 focus:ring-indigo-500"
+                            title={sortConfig.markets === 'asc' ? "Ascending" : "Descending"}
+                        >
+                            {sortConfig.markets === 'asc' ? <BarsArrowUpIcon className="h-4 w-4"/> : <BarsArrowDownIcon className="h-4 w-4"/>}
+                        </button>
+                    </div>
+                </div>
             </div>
             
             {/* Add Market Form */}
@@ -297,10 +354,10 @@ export const AdminDashboard = () => {
                   </button>
                 </li>
               ))}
-              {markets.length === 0 && (
+              {sortedMarkets.length === 0 && (
                 <li className="px-4 py-10 text-center text-gray-500 flex flex-col items-center justify-center">
                   <BuildingStorefrontIcon className="h-8 w-8 text-gray-300 mb-2" />
-                  <p className="text-xs">No markets defined.</p>
+                  <p className="text-xs">No markets found.</p>
                 </li>
               )}
             </ul>

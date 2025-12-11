@@ -13,7 +13,8 @@ import {
   BuildingStorefrontIcon,
   ArrowTrendingUpIcon,
   ArrowTrendingDownIcon,
-  ClockIcon
+  ClockIcon,
+  ChartBarIcon
 } from '@heroicons/react/24/outline';
 import {
   LineChart,
@@ -26,7 +27,8 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  ReferenceLine
+  ReferenceLine,
+  Cell
 } from 'recharts';
 
 export const TraderAnalytics = () => {
@@ -188,7 +190,16 @@ export const TraderAnalytics = () => {
     })).sort((a, b) => b.count - a.count); // Sort by most active markets
   }, [history, selectedChartCommodity]);
 
-  // Derived Data: Filtered History Table
+  // Top 5 Frequent Markets for Chart
+  const topMarketsChartData = useMemo(() => {
+      return marketStatsBreakdown.slice(0, 5).map(m => ({
+          name: m.name,
+          avg: m.avg,
+          count: m.count
+      }));
+  }, [marketStatsBreakdown]);
+
+  // Filtered History Table
   const filteredHistory = useMemo(() => {
     return history.filter(item => {
       const matchMarket = filterMarket === 'ALL' || item.marketId === filterMarket;
@@ -298,37 +309,41 @@ export const TraderAnalytics = () => {
               </div>
             </div>
 
-            {/* BAR CHART */}
+            {/* TOP 5 MARKETS CHART */}
             <div className="bg-white p-6 rounded-lg shadow border border-gray-100">
                <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h4 className="text-base font-bold text-gray-900">Market Comparison</h4>
-                  <p className="text-xs text-gray-500">Average price by market for {selectedCommodityName} ({selectedCommodityUnit})</p>
+                  <h4 className="text-base font-bold text-gray-900">Top 5 Markets by Volume</h4>
+                  <p className="text-xs text-gray-500">Avg price in your most active markets for {selectedCommodityName}</p>
                 </div>
-                <div className="p-2 bg-green-50 rounded-lg">
-                   <ShoppingBagIcon className="h-5 w-5 text-green-600" />
+                <div className="p-2 bg-purple-50 rounded-lg">
+                   <ChartBarIcon className="h-5 w-5 text-purple-600" />
                 </div>
               </div>
 
               <div className="h-72 w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={barChartData} margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
-                    <XAxis dataKey="name" tick={{fill: '#6B7280', fontSize: 12}} axisLine={false} tickLine={false} />
-                    <YAxis tick={{fill: '#6B7280', fontSize: 12}} axisLine={false} tickLine={false} tickFormatter={(val) => `₦${val}`}/>
+                  <BarChart data={topMarketsChartData} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E5E7EB" />
+                    <XAxis type="number" tick={{fill: '#6B7280', fontSize: 12}} axisLine={false} tickLine={false} tickFormatter={(val) => `₦${val}`}/>
+                    <YAxis type="category" dataKey="name" width={80} tick={{fill: '#6B7280', fontSize: 12}} axisLine={false} tickLine={false} />
                     <Tooltip 
                       cursor={{fill: '#F3F4F6'}}
                       contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'}}
                       formatter={(value: number) => [`₦${value.toFixed(2)}`, 'Avg Price']}
                     />
                     <Legend />
-                    <ReferenceLine 
-                      y={selectedCommodityGlobalAvg} 
+                     <ReferenceLine 
+                      x={selectedCommodityGlobalAvg} 
                       stroke="#EF4444" 
                       strokeDasharray="3 3"
-                      label={{ value: 'Avg', position: 'right', fill: '#EF4444', fontSize: 12 }} 
+                      label={{ value: 'Avg', position: 'insideTopRight', fill: '#EF4444', fontSize: 10 }} 
                     />
-                    <Bar dataKey="avgPrice" name="Avg Price" fill="#10B981" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="avg" name="Avg Price" fill="#8B5CF6" radius={[0, 4, 4, 0]}>
+                       {topMarketsChartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={index % 2 === 0 ? '#8B5CF6' : '#A78BFA'} />
+                        ))}
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               </div>

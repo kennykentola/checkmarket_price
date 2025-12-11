@@ -6,7 +6,9 @@ import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { Home } from './pages/Home';
 import { MarketOverview } from './pages/buyer/MarketOverview';
+import { MarketDetails } from './pages/buyer/MarketDetails';
 import { ComparePrices } from './pages/buyer/ComparePrices';
+import { Heatmap } from './pages/Heatmap';
 import { SubmitPrice } from './pages/trader/SubmitPrice';
 import { TraderDashboard } from './pages/trader/TraderDashboard';
 import { TraderAnalytics } from './pages/trader/TraderAnalytics';
@@ -17,7 +19,7 @@ import { Notifications } from './pages/Notifications';
 import { UserRole } from './types';
 
 // Protected Route Wrapper
-const ProtectedRoute = ({ children, allowedRoles }: { children?: React.ReactNode, allowedRoles?: UserRole[] }) => {
+const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode, allowedRoles?: UserRole[] }) => {
   const { user, isLoading } = useAuth();
 
   if (isLoading) return <div className="p-10 text-center">Loading...</div>;
@@ -35,10 +37,16 @@ function App() {
       <Router>
         <Switch>
           {/* Public Home Page */}
-          <Route exact path="/" component={Home} />
+          <Route exact path="/">
+            <Home />
+          </Route>
           
-          <Route path="/login" component={Login} />
-          <Route path="/register" component={Register} />
+          <Route path="/login">
+            <Login />
+          </Route>
+          <Route path="/register">
+            <Register />
+          </Route>
           
           {/* Buyer Routes */}
           <Route path="/buyer/prices">
@@ -46,10 +54,22 @@ function App() {
               <MarketOverview />
             </ProtectedRoute>
           </Route>
+
+          <Route path="/buyer/market/:marketId">
+            <ProtectedRoute allowedRoles={[UserRole.BUYER, UserRole.TRADER, UserRole.ADMIN, UserRole.FARMER]}>
+              <MarketDetails />
+            </ProtectedRoute>
+          </Route>
           
           <Route path="/buyer/compare">
             <ProtectedRoute allowedRoles={[UserRole.BUYER, UserRole.TRADER, UserRole.ADMIN, UserRole.FARMER]}>
               <ComparePrices />
+            </ProtectedRoute>
+          </Route>
+
+          <Route path="/heatmap">
+            <ProtectedRoute allowedRoles={[UserRole.BUYER, UserRole.TRADER, UserRole.ADMIN, UserRole.FARMER]}>
+              <Heatmap />
             </ProtectedRoute>
           </Route>
 
@@ -86,9 +106,9 @@ function App() {
 
           {/* Farmer Routes */}
           <Route path="/farmgate">
-             <ProtectedRoute allowedRoles={[UserRole.FARMER, UserRole.ADMIN, UserRole.TRADER]}>
-               <FarmerUpload />
-             </ProtectedRoute>
+            <ProtectedRoute allowedRoles={[UserRole.FARMER, UserRole.ADMIN, UserRole.TRADER]}>
+              <FarmerUpload />
+            </ProtectedRoute>
           </Route>
 
           {/* Admin Routes */}
@@ -96,6 +116,11 @@ function App() {
             <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
               <AdminDashboard />
             </ProtectedRoute>
+          </Route>
+
+          {/* Fallback */}
+          <Route path="*">
+            <Redirect to="/" />
           </Route>
 
         </Switch>
