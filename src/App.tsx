@@ -19,7 +19,7 @@ import { Notifications } from './pages/Notifications';
 import { UserRole } from './types';
 
 // Protected Route Wrapper
-const ProtectedRoute = ({ children, allowedRoles }: { children?: React.ReactNode, allowedRoles?: UserRole[] }) => {
+const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode, allowedRoles?: UserRole[] }) => {
   const { user, isLoading } = useAuth();
 
   if (isLoading) return <div className="p-10 text-center">Loading...</div>;
@@ -37,10 +37,16 @@ function App() {
       <Router>
         <Switch>
           {/* Public Home Page */}
-          <Route exact path="/" component={Home} />
+          <Route exact path="/">
+            <Home />
+          </Route>
           
-          <Route path="/login" component={Login} />
-          <Route path="/register" component={Register} />
+          <Route path="/login">
+            <Login />
+          </Route>
+          <Route path="/register">
+            <Register />
+          </Route>
           
           {/* Buyer Routes */}
           <Route path="/buyer/prices">
@@ -100,9 +106,9 @@ function App() {
 
           {/* Farmer Routes */}
           <Route path="/farmgate">
-             <ProtectedRoute allowedRoles={[UserRole.FARMER, UserRole.ADMIN, UserRole.TRADER]}>
-               <FarmerUpload />
-             </ProtectedRoute>
+            <ProtectedRoute allowedRoles={[UserRole.FARMER, UserRole.ADMIN, UserRole.TRADER]}>
+              <FarmerUpload />
+            </ProtectedRoute>
           </Route>
 
           {/* Admin Routes */}
@@ -110,6 +116,11 @@ function App() {
             <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
               <AdminDashboard />
             </ProtectedRoute>
+          </Route>
+
+          {/* Fallback */}
+          <Route path="*">
+            <Redirect to="/" />
           </Route>
 
         </Switch>

@@ -1,10 +1,10 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
 import { api } from '../services/api';
 import { Commodity, PriceDataExpanded, Market } from '../types';
 import { CommoditySelector } from '../components/CommoditySelector';
-import { FireIcon, MapPinIcon, ArrowDownIcon, ArrowUpIcon, MagnifyingGlassIcon, NoSymbolIcon } from '@heroicons/react/24/outline';
+import { FireIcon, ArrowDownIcon, ArrowUpIcon, MagnifyingGlassIcon, NoSymbolIcon } from '@heroicons/react/24/outline';
+import { Link } from 'react-router-dom';
 
 export const Heatmap = () => {
   const [commodities, setCommodities] = useState<Commodity[]>([]);
@@ -170,19 +170,19 @@ export const Heatmap = () => {
                     } : {}}
                 >
                     <div className="flex justify-between items-start mb-2">
-                        <Link to={`/buyer/market/${item.market.$id}`} className={`font-bold line-clamp-1 hover:underline ${item.hasData ? 'text-gray-900' : 'text-gray-500'}`} title={`View details for ${item.market.name}`} style={item.hasData ? { color: getTextColor(item.intensity || 0) } : {}}>
-                            {item.market.name}
+                        <Link 
+                          to={`/buyer/market/${item.market.$id}`} 
+                          className={`font-bold hover:underline block leading-snug ${item.hasData ? 'text-gray-900' : 'text-gray-500'}`} 
+                          title={`View details for ${item.market.name}`} 
+                          style={item.hasData ? { color: getTextColor(item.intensity || 0) } : {}}
+                        >
+                            {item.market.name} <span className="font-normal text-sm opacity-80 block sm:inline sm:ml-1">({item.market.location})</span>
                         </Link>
                         {item.hasData && (
-                            <span className="text-xs font-semibold px-2 py-0.5 bg-white bg-opacity-80 rounded-full border border-gray-200 shadow-sm">
+                            <span className="text-xs font-semibold px-2 py-0.5 bg-white bg-opacity-80 rounded-full border border-gray-200 shadow-sm ml-2 whitespace-nowrap">
                                 {item.intensity !== undefined && item.intensity < 0.3 ? 'Low' : item.intensity !== undefined && item.intensity > 0.7 ? 'High' : 'Avg'}
                             </span>
                         )}
-                    </div>
-                    
-                    <div className="flex items-center text-xs text-gray-500 mb-3">
-                        <MapPinIcon className="h-3 w-3 mr-1" />
-                        {item.market.location}
                     </div>
 
                     {item.hasData ? (
@@ -208,8 +208,8 @@ export const Heatmap = () => {
                             </div>
                         </div>
                     ) : (
-                        <div className="h-24 flex flex-col items-center justify-center text-gray-400">
-                             <NoSymbolIcon className="h-8 w-8 mb-2 opacity-50" />
+                        <div className="h-20 flex flex-col items-center justify-center text-gray-400 mt-2">
+                             <NoSymbolIcon className="h-6 w-6 mb-1 opacity-50" />
                              <span className="text-xs italic">No price data</span>
                         </div>
                     )}
