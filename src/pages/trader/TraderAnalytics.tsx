@@ -1,8 +1,8 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { api } from '../../services/api';
-import { useAuth } from '../../context/AuthContext';
-import { PriceDataExpanded, Commodity } from '../../types';
+import { useAuth } from '@/context/AuthContext';
+import { PriceDataExpanded, Commodity } from '@/types';
 import { getItemImage, getMarketImage } from '../../utils/imageHelpers';
 import { 
   FunnelIcon,

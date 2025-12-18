@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
-import { Commodity, PriceDataExpanded } from '../types';
+import { Commodity, PriceDataExpanded } from '@/types';
 import { CommoditySelector } from '../components/CommoditySelector';
 import { TrashIcon, PlusIcon, CalculatorIcon } from '@heroicons/react/24/outline';
 

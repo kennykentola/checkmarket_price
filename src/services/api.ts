@@ -1,5 +1,5 @@
 
-import { Market, Commodity, PriceEntry, PriceDataExpanded, User, UserRole, FarmgateEntry, Notification, Category } from '../types';
+import { Market, Commodity, PriceEntry, PriceDataExpanded, User, UserRole, FarmgateEntry, Notification, Category } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 
 // --- MOCK DATA FOR DEMO ---

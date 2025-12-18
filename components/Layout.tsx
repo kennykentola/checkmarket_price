@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Link, useLocation, useHistory } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { UserRole } from '../types';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
+import { UserRole } from '@/types';
 import { 
   HomeIcon, 
   ChartBarIcon, 
@@ -21,12 +21,12 @@ import {
 export const Layout = ({ children }: { children?: React.ReactNode }) => {
   const { user, logout } = useAuth();
   const location = useLocation();
-  const history = useHistory();
+  const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
-    history.push('/login');
+    navigate('/login');
   };
 
   const navItems = [

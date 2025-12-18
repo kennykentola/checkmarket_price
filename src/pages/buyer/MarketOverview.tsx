@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { api } from '../../services/api';
-import { PriceDataExpanded } from '../../types';
+import { PriceDataExpanded } from '@/types';
 import { getItemImage } from '../../utils/imageHelpers';
 import { MapPinIcon, CalendarIcon } from '@heroicons/react/24/outline';
 import { Link } from 'react-router-dom';

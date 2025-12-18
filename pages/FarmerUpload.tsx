@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
-import { Commodity } from '../types';
+import { Commodity } from '@/types';
 import { CommoditySelector } from '../components/CommoditySelector';
 import { TruckIcon } from '@heroicons/react/24/outline';
 

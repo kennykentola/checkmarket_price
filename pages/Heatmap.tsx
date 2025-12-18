@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { api } from '../services/api';
-import { Commodity, PriceDataExpanded, Market } from '../types';
+import { Commodity, PriceDataExpanded, Market } from '@/types';
 import { CommoditySelector } from '../components/CommoditySelector';
 import { FireIcon, MapPinIcon, ArrowDownIcon, ArrowUpIcon, MagnifyingGlassIcon, NoSymbolIcon } from '@heroicons/react/24/outline';
 
