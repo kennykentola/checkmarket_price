@@ -1,5 +1,5 @@
 
-# Run and deploy your AI Studio app
+# this chech market price
 
 This contains everything you need to run your app locally.
 
