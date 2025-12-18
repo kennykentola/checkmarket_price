@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { api } from '../../services/api';
-import { Market, PriceDataExpanded } from '../../types';
+import { Market, PriceDataExpanded } from '@/types';
 import { getItemImage, getMarketImage } from '../../utils/imageHelpers';
 import { 
   ArrowLeftIcon, 

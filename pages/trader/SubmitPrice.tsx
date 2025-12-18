@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../../services/api';
-import { useAuth } from '../../context/AuthContext';
-import { Market, Commodity } from '../../types';
+import { useAuth } from '@/context/AuthContext';
+import { Market, Commodity } from '@/types';
 
 export const SubmitPrice = () => {
   const { user } = useAuth();

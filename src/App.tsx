@@ -1,6 +1,6 @@
 import React from 'react';
-import { HashRouter as Router, Switch, Route, Redirect } from 'react-router-dom';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { Layout } from './components/Layout';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
@@ -16,7 +16,7 @@ import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { Calculator } from './pages/Calculator';
 import { FarmerUpload } from './pages/FarmerUpload';
 import { Notifications } from './pages/Notifications';
-import { UserRole } from './types';
+import { UserRole } from '@/types';
 
 // Protected Route Wrapper
 const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode, allowedRoles?: UserRole[] }) => {

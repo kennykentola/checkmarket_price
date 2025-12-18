@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useHistory } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { UserRole } from '../types';
+import { useAuth } from '@/context/AuthContext';
+import { UserRole } from '@/types';
 import { 
   HomeIcon, 
   ChartBarIcon, 

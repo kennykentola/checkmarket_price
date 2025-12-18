@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../services/api';
-import { PriceDataExpanded, Commodity } from '../types';
+import { PriceDataExpanded, Commodity } from '@/types';
 import { 
   ArrowRightIcon, 
   ArrowTrendingUpIcon,

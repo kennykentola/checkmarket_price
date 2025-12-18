@@ -1,8 +1,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
-import { useAuth } from '../context/AuthContext';
-import { Notification } from '../types';
+import { useAuth } from '@/context/AuthContext';
+import { Notification } from '@/types';
 import { BellIcon, InformationCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 
 export const Notifications = () => {

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { api } from '../../services/api';
-import { Market, Commodity, Category } from '../../types';
+import { Market, Commodity, Category } from '@/types';
 import { 
   BuildingStorefrontIcon, 
   TagIcon, 
