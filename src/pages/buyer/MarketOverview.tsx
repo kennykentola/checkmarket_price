@@ -11,18 +11,29 @@ export const MarketOverview = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
+  const loadData = async () => {
+    try {
+      const data = await api.getLatestPrices();
+      setPrices(data);
+    } catch (error) {
+      console.error("Failed to fetch prices", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const data = await api.getLatestPrices();
-        setPrices(data);
-      } catch (error) {
-        console.error("Failed to fetch prices", error);
-      } finally {
-        setLoading(false);
+    loadData();
+  }, []);
+
+  useEffect(() => {
+    const handleDataUpdate = (event: any) => {
+      if (event.detail.type === 'price') {
+        loadData();
       }
     };
-    loadData();
+    window.addEventListener('dataUpdated', handleDataUpdate);
+    return () => window.removeEventListener('dataUpdated', handleDataUpdate);
   }, []);
 
   const filteredPrices = prices.filter(p => 
