@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { api } from '../../services/api';
-import { Commodity, PriceDataExpanded } from '../../types';
-import { PriceChart } from '../../components/PriceChart';
+import { api } from '@/services/api';
+import { Commodity, PriceDataExpanded } from '@/types';
+import { PriceChart } from '@/components/PriceChart';
 
 export const ComparePrices = () => {
   const [commodities, setCommodities] = useState<Commodity[]>([]);
@@ -76,12 +76,12 @@ export const ComparePrices = () => {
             {prices.map(p => (
               <li key={p.$id} className="px-4 py-4 flex justify-between items-center hover:bg-gray-50">
                 <span className="font-medium text-gray-700">{p.marketName}</span>
-                <span className="font-bold text-gray-900">${p.price.toFixed(2)}</span>
+                <span className="font-bold text-gray-900">₦{p.price.toFixed(2)}</span>
               </li>
             ))}
              {prices.length === 0 && !loading && (
               <li className="px-4 py-4 text-center text-gray-500">No price data available for this commodity.</li>
-            )}
+             )}
           </ul>
         </div>
       </div>

@@ -1,8 +1,8 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
-import { api } from '../services/api';
+import { api } from '@/services/api';
 import { Commodity, PriceDataExpanded, Market } from '@/types';
-import { CommoditySelector } from '../components/CommoditySelector';
+import { CommoditySelector } from '@/components/CommoditySelector';
 import { FireIcon, ArrowDownIcon, ArrowUpIcon, MagnifyingGlassIcon, NoSymbolIcon } from '@heroicons/react/24/outline';
 import { Link } from 'react-router-dom';
 

@@ -23,9 +23,9 @@ const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode,
   const { user, isLoading } = useAuth();
 
   if (isLoading) return <div className="p-10 text-center">Loading...</div>;
-  if (!user) return <Redirect to="/login" />;
+  if (!user) return <Navigate to="/login" />;
   if (allowedRoles && !allowedRoles.includes(user.role)) {
-    return <Redirect to="/buyer/prices" />;
+    return <Navigate to="/buyer/prices" />;
   }
 
   return <Layout>{children}</Layout>;
@@ -35,95 +35,87 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <Switch>
+        <Routes>
           {/* Public Home Page */}
-          <Route exact path="/">
-            <Home />
-          </Route>
-          
-          <Route path="/login">
-            <Login />
-          </Route>
-          <Route path="/register">
-            <Register />
-          </Route>
-          
+          <Route path="/" element={<Home />} />
+
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+
           {/* Buyer Routes */}
-          <Route path="/buyer/prices">
+          <Route path="/buyer/prices" element={
             <ProtectedRoute allowedRoles={[UserRole.BUYER, UserRole.TRADER, UserRole.ADMIN, UserRole.FARMER]}>
               <MarketOverview />
             </ProtectedRoute>
-          </Route>
+          } />
 
-          <Route path="/buyer/market/:marketId">
+          <Route path="/buyer/market/:marketId" element={
             <ProtectedRoute allowedRoles={[UserRole.BUYER, UserRole.TRADER, UserRole.ADMIN, UserRole.FARMER]}>
               <MarketDetails />
             </ProtectedRoute>
-          </Route>
-          
-          <Route path="/buyer/compare">
+          } />
+
+          <Route path="/buyer/compare" element={
             <ProtectedRoute allowedRoles={[UserRole.BUYER, UserRole.TRADER, UserRole.ADMIN, UserRole.FARMER]}>
               <ComparePrices />
             </ProtectedRoute>
-          </Route>
+          } />
 
-          <Route path="/heatmap">
+          <Route path="/heatmap" element={
             <ProtectedRoute allowedRoles={[UserRole.BUYER, UserRole.TRADER, UserRole.ADMIN, UserRole.FARMER]}>
               <Heatmap />
             </ProtectedRoute>
-          </Route>
+          } />
 
-          <Route path="/calculator">
+          <Route path="/calculator" element={
             <ProtectedRoute allowedRoles={[UserRole.BUYER, UserRole.TRADER, UserRole.ADMIN]}>
               <Calculator />
             </ProtectedRoute>
-          </Route>
+          } />
 
-          <Route path="/notifications">
+          <Route path="/notifications" element={
             <ProtectedRoute allowedRoles={[UserRole.BUYER, UserRole.TRADER, UserRole.ADMIN, UserRole.FARMER]}>
               <Notifications />
             </ProtectedRoute>
-          </Route>
+          } />
 
           {/* Trader Routes */}
-          <Route path="/trader/dashboard">
+          <Route path="/trader/dashboard" element={
             <ProtectedRoute allowedRoles={[UserRole.TRADER, UserRole.ADMIN]}>
               <TraderDashboard />
             </ProtectedRoute>
-          </Route>
+          } />
 
-          <Route path="/trader/analytics">
+          <Route path="/trader/analytics" element={
             <ProtectedRoute allowedRoles={[UserRole.TRADER, UserRole.ADMIN]}>
               <TraderAnalytics />
             </ProtectedRoute>
-          </Route>
+          } />
 
-          <Route path="/trader/submit">
+          <Route path="/trader/submit" element={
             <ProtectedRoute allowedRoles={[UserRole.TRADER, UserRole.ADMIN]}>
               <SubmitPrice />
             </ProtectedRoute>
-          </Route>
+          } />
 
           {/* Farmer Routes */}
-          <Route path="/farmgate">
+          <Route path="/farmgate" element={
             <ProtectedRoute allowedRoles={[UserRole.FARMER, UserRole.ADMIN, UserRole.TRADER]}>
               <FarmerUpload />
             </ProtectedRoute>
-          </Route>
+          } />
 
           {/* Admin Routes */}
-          <Route path="/admin/dashboard">
+          <Route path="/admin/dashboard" element={
             <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
               <AdminDashboard />
             </ProtectedRoute>
-          </Route>
+          } />
 
           {/* Fallback */}
-          <Route path="*">
-            <Redirect to="/" />
-          </Route>
+          <Route path="*" element={<Navigate to="/" />} />
 
-        </Switch>
+        </Routes>
       </Router>
     </AuthProvider>
   );
