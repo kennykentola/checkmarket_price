@@ -284,6 +284,8 @@ const mockApi: ApiService = {
       dateSubmitted: new Date().toISOString(),
     };
     MOCK_PRICES.unshift(newPrice);
+    // Trigger refresh for all components
+    window.dispatchEvent(new CustomEvent('dataUpdated', { detail: { type: 'price' } }));
     return newPrice;
   },
   submitFarmgatePrice: async (data) => {
@@ -300,6 +302,8 @@ const mockApi: ApiService = {
   addMarket: async (data) => {
     const m = { ...data, $id: uuidv4() };
     MOCK_MARKETS.push(m);
+    // Trigger refresh
+    window.dispatchEvent(new CustomEvent('dataUpdated', { detail: { type: 'market' } }));
     return m;
   },
   deleteMarket: async (id) => {

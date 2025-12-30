@@ -14,25 +14,36 @@ export const Heatmap = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
+  const loadData = async () => {
+    try {
+      const [c, m, p] = await Promise.all([
+        api.getCommodities(),
+        api.getMarkets(),
+        api.getLatestPrices()
+      ]);
+      setCommodities(c);
+      setMarkets(m);
+      setAllPrices(p);
+      if (c.length > 0 && !selectedCommodityId) setSelectedCommodityId(c[0].$id);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [c, m, p] = await Promise.all([
-          api.getCommodities(),
-          api.getMarkets(),
-          api.getLatestPrices()
-        ]);
-        setCommodities(c);
-        setMarkets(m);
-        setAllPrices(p);
-        if (c.length > 0) setSelectedCommodityId(c[0].$id);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
+    loadData();
+  }, []);
+
+  useEffect(() => {
+    const handleDataUpdate = (event: any) => {
+      if (event.detail.type === 'price' || event.detail.type === 'market') {
+        loadData();
       }
     };
-    loadData();
+    window.addEventListener('dataUpdated', handleDataUpdate);
+    return () => window.removeEventListener('dataUpdated', handleDataUpdate);
   }, []);
 
   // Compute Heatmap Data

@@ -1,95 +1,88 @@
-import { Client, Users } from 'node-appwrite';
+import { Client, Users } from 'appwrite';
 import 'dotenv/config';
 
 // Initialize Appwrite client
 const client = new Client()
   .setEndpoint('https://fra.cloud.appwrite.io/v1')
-  .setProject('marketprice')
-  .setKey(process.env.APPWRITE_API_KEY);
+  .setProject('marketprice');
+
+client.headers['X-Appwrite-Key'] = process.env.APPWRITE_API_KEY; // API key from env
 
 const users = new Users(client);
 
-// User data
-const testUsers = [
+// User data with passwords
+const users = [
   {
+    $id: '69528634002661a14535',
     email: 'kennykentola8@gmail.com',
     password: 'password123',
-    name: 'Ademola Peter Kehinde',
+    name: 'ademola peter kehinde',
+    role: 'viewer'
   },
   {
+    $id: '69528634002661a14536',
     email: 'test@example.com',
     password: 'password123',
-    name: 'Tester Kenn',
+    name: 'tester kenn',
+    role: 'trader'
   },
   {
+    $id: '69528634002661a14537',
     email: 'peterkehindeademola@gmail.com',
     password: 'password123',
-    name: 'Ademola Peter Kehinde',
+    name: 'ademola peter kehinde',
+    role: 'admin'
   },
   {
+    $id: '69539741581dff157989',
     email: 'buyer@example.com',
     password: 'password123',
     name: 'Test Buyer',
+    role: 'viewer'
   },
   {
+    $id: '69539742cf4bca107f02',
     email: 'trader@example.com',
     password: 'password123',
     name: 'Test Trader',
+    role: 'trader'
   },
   {
+    $id: '69539743c3f75f5cc817',
     email: 'admin@example.com',
     password: 'password123',
     name: 'Test Admin',
+    role: 'admin'
   },
   {
+    $id: '69539744b3bf26fbb5a9',
     email: 'farmer@example.com',
     password: 'password123',
     name: 'Test Farmer',
-  },
+    role: 'trader'
+  }
 ];
 
 async function createUsers() {
   try {
-    console.log('Creating test users...');
+    console.log('Creating user accounts...');
 
-    for (const user of testUsers) {
+    for (const user of users) {
       try {
-        const createdUser = await users.create(
-          'unique()', // userId
-          user.email,
-          undefined, // phone
-          user.password,
-          user.name
-        );
-        console.log(`Created user: ${user.email} (${createdUser.$id})`);
-
-        // Disable MFA for the user
-        await users.updateMFA(createdUser.$id, false);
-        console.log(`Disabled MFA for ${user.email}`);
+        const userAccount = await users.create(user.$id, user.email, user.password, user.name);
+        console.log(`Created user account: ${user.email} with ID: ${userAccount.$id}`);
       } catch (error) {
         if (error.code === 409) {
           console.log(`User ${user.email} already exists`);
-          // Try to disable MFA if user exists
-          try {
-            // Need to get user ID first
-            const userList = await users.list();
-            const existingUser = userList.users.find(u => u.email === user.email);
-            if (existingUser) {
-              await users.updateMFA(existingUser.$id, false);
-              console.log(`Disabled MFA for existing user ${user.email}`);
-            }
-          } catch (mfaError) {
-            console.error(`Error disabling MFA for ${user.email}:`, mfaError.message);
-          }
         } else {
-          console.error(`Error creating user ${user.email}:`, error.message);
+          console.error(`Error creating user ${user.email}:`, error);
         }
       }
     }
 
-    console.log('User creation complete!');
+    console.log('User accounts created successfully!');
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Error creating users:', error);
   }
 }
 
