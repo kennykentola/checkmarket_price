@@ -1,5 +1,5 @@
 
-# this chech market price
+# this is chech market price
 
 This contains everything you need to run your app locally.
 

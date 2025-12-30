@@ -65,7 +65,7 @@ export const Home = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
-              <span className="text-2xl font-bold text-indigo-600">MarketCheck</span>
+              <span className="text-2xl font-bold text-indigo-600">Local Market Price Check</span>
             </div>
             <div className="flex items-center space-x-4">
               <Link to="/login" className="text-gray-500 hover:text-gray-900 font-medium px-3 py-2">
@@ -210,12 +210,12 @@ export const Home = () => {
                         </div>
                         
                         <div className="mt-6 flex items-baseline">
-                           <span className="text-3xl font-extrabold text-gray-900">${item.avgPrice.toFixed(2)}</span>
+                           <span className="text-3xl font-extrabold text-gray-900">₦{item.avgPrice.toFixed(2)}</span>
                            <span className="ml-1 text-gray-600 font-medium">/ {item.unit}</span>
                         </div>
                         
                         <div className="mt-4 pt-4 border-t border-black border-opacity-5 flex justify-between items-center text-sm">
-                           <span className="text-gray-600">Lowest: <span className="font-semibold text-gray-900">${item.minPrice.toFixed(2)}</span></span>
+                           <span className="text-gray-600">Lowest: <span className="font-semibold text-gray-900">₦{item.minPrice.toFixed(2)}</span></span>
                            <span className="text-gray-500 text-xs">Updated {item.latestUpdate.toLocaleDateString()}</span>
                         </div>
                       </div>

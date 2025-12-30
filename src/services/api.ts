@@ -1,6 +1,8 @@
 
 import { Market, Commodity, PriceEntry, PriceDataExpanded, User, UserRole, FarmgateEntry, Notification, Category } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
+import { databases, DATABASE_ID, COLLECTION_MARKETS, COLLECTION_COMMODITIES, COLLECTION_PRICES, COLLECTION_CATEGORIES, COLLECTION_USERS, COLLECTION_NOTIFICATIONS, COLLECTION_FARMGATE_PRICES } from './appwriteConfig';
+import { ID, Query } from 'appwrite';
 
 // --- MOCK DATA FOR DEMO ---
 let MOCK_MARKETS: Market[] = [
@@ -197,8 +199,8 @@ MOCK_COMMODITIES.forEach(commodity => {
 });
 
 MOCK_NOTIFICATIONS.push(
-    { $id: 'n1', userId: 't1', message: 'Rice (Local) price rose by 5% in Bodija Market', type: 'alert', isRead: false, createdAt: new Date().toISOString() },
-    { $id: 'n2', userId: 't1', message: 'New market "Gbagi" added to the system', type: 'info', isRead: false, createdAt: getPastDate(1) }
+    { $id: 'n1', userId: 't1', message: 'Rice (Local) price rose by 5% in Bodija Market', type: 'alert', read: false, createdAt: new Date().toISOString() },
+    { $id: 'n2', userId: 't1', message: 'New market "Gbagi" added to the system', type: 'info', read: false, createdAt: getPastDate(1) }
 );
 
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useLocation, useHistory } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { UserRole } from '@/types';
 import { 
@@ -21,12 +21,12 @@ import {
 export const Layout = ({ children }: { children?: React.ReactNode }) => {
   const { user, logout } = useAuth();
   const location = useLocation();
-  const history = useHistory();
+  const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
-    history.push('/login');
+    navigate('/login');
   };
 
   const navItems = [
@@ -71,7 +71,7 @@ export const Layout = ({ children }: { children?: React.ReactNode }) => {
         w-64 bg-white border-r border-gray-200 z-10 flex flex-col
       `}>
         <div className="h-16 flex items-center px-6 border-b border-gray-200 hidden md:flex">
-          <span className="text-2xl font-bold text-indigo-600">MarketCheck</span>
+          <span className="text-2xl font-bold text-indigo-600">Local Market Price Check</span>
         </div>
 
         <div className="p-4 flex-1 overflow-y-auto">

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { api } from '../../services/api';
+import { api } from '@/services/api';
 import { useAuth } from '@/context/AuthContext';
 import { Market, Commodity } from '@/types';
 
@@ -104,7 +104,7 @@ export const SubmitPrice = () => {
               <label htmlFor="price" className="block text-sm font-medium text-gray-700">Price per Unit</label>
               <div className="mt-1 relative rounded-md shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <span className="text-gray-500 sm:text-sm">$</span>
+                  <span className="text-gray-500 sm:text-sm">₦</span>
                 </div>
                 <input
                   type="number"
