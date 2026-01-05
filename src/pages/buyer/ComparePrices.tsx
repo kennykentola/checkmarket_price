@@ -10,10 +10,25 @@ export const ComparePrices = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    api.getCommodities().then(data => {
+    const loadCommodities = async () => {
+      const data = await api.getCommodities();
       setCommodities(data);
       if (data.length > 0) setSelectedCommodity(data[0].$id);
-    });
+    };
+    loadCommodities();
+
+    // Listen for data updates from admin changes
+    const handleDataUpdate = (event: CustomEvent) => {
+      if (event.detail?.type === 'price' || event.detail?.type === 'commodity') {
+        loadCommodities();
+      }
+    };
+
+    window.addEventListener('dataUpdated', handleDataUpdate as EventListener);
+
+    return () => {
+      window.removeEventListener('dataUpdated', handleDataUpdate as EventListener);
+    };
   }, []);
 
   useEffect(() => {

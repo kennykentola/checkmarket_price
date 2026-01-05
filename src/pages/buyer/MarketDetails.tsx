@@ -27,7 +27,7 @@ export const MarketDetails = () => {
           api.getLatestPrices()
         ]);
         setMarket(m || null);
-        
+
         // Filter prices for this market only
         setPrices(allPrices.filter(p => p.marketId === marketId));
       } catch (e) {
@@ -36,7 +36,21 @@ export const MarketDetails = () => {
         setLoading(false);
       }
     };
+
     loadData();
+
+    // Listen for data updates from admin changes
+    const handleDataUpdate = (event: CustomEvent) => {
+      if (event.detail?.type === 'price' || event.detail?.type === 'market') {
+        loadData();
+      }
+    };
+
+    window.addEventListener('dataUpdated', handleDataUpdate as EventListener);
+
+    return () => {
+      window.removeEventListener('dataUpdated', handleDataUpdate as EventListener);
+    };
   }, [marketId]);
 
   // Group prices by category

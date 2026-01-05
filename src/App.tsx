@@ -1,10 +1,11 @@
 import React from 'react';
-import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { Layout } from './components/Layout';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { Home } from './pages/Home';
+import { PublicPrices } from './pages/PublicPrices';
 import { MarketOverview } from './pages/buyer/MarketOverview';
 import { MarketDetails } from './pages/buyer/MarketDetails';
 import { ComparePrices } from './pages/buyer/ComparePrices';
@@ -13,6 +14,7 @@ import { SubmitPrice } from './pages/trader/SubmitPrice';
 import { TraderDashboard } from './pages/trader/TraderDashboard';
 import { TraderAnalytics } from './pages/trader/TraderAnalytics';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
+import { MarketInventory } from './pages/admin/MarketInventory';
 import { Calculator } from './pages/Calculator';
 import { FarmerUpload } from './pages/FarmerUpload';
 import { Notifications } from './pages/Notifications';
@@ -36,8 +38,9 @@ function App() {
     <AuthProvider>
       <Router>
         <Routes>
-          {/* Public Home Page */}
+          {/* Public Routes */}
           <Route path="/" element={<Home />} />
+          <Route path="/prices" element={<PublicPrices />} />
 
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -107,8 +110,14 @@ function App() {
 
           {/* Admin Routes */}
           <Route path="/admin/dashboard" element={
-            <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
+            <ProtectedRoute allowedRoles={[UserRole.ADMIN, UserRole.TRADER]}>
               <AdminDashboard />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/admin/market-inventory/:marketId" element={
+            <ProtectedRoute allowedRoles={[UserRole.ADMIN, UserRole.TRADER]}>
+              <MarketInventory />
             </ProtectedRoute>
           } />
 

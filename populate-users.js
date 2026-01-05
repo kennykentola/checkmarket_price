@@ -1,4 +1,4 @@
-import { Client, Databases } from 'appwrite';
+import { Client, Databases, ID } from 'node-appwrite';
 import 'dotenv/config';
 
 // Initialize Appwrite client
@@ -6,95 +6,68 @@ const client = new Client()
   .setEndpoint('https://fra.cloud.appwrite.io/v1')
   .setProject('marketprice');
 
-client.headers['X-Appwrite-Key'] = process.env.APPWRITE_API_KEY; // API key from env
+client.headers['X-Appwrite-Key'] = process.env.APPWRITE_API_KEY;
 
 const databases = new Databases(client);
 const databaseId = 'marketprice';
 
-// User data from Appwrite console
+// Collection ID for users
+const COLLECTION_USERS = process.env.VITE_COLLECTION_USERS || '695be61b0010d1f27655';
+
+// User data with email as the key
 const users = [
-  {
-    $id: '69528634002661a14535',
-    username: 'kennyk',
-    name: 'ademola peter kehinde',
-    email: 'kennykentola8@gmail.com',
-    role: 'viewer'
-  },
-  {
-    $id: '69460a160032fa53c64e',
-    username: 'testerk',
-    name: 'tester kenn',
-    email: 'test@example.com',
-    role: 'trader'
-  },
-  {
-    $id: '6945f4a830cefee56729',
-    username: 'peterk',
-    name: 'ademola peter kehinde',
-    email: 'peterkehindeademola@gmail.com',
-    role: 'admin'
-  },
-  {
-    $id: '69539741581dff157989',
-    username: 'testbuyer',
-    name: 'Test Buyer',
-    email: 'buyer@example.com',
-    role: 'viewer'
-  },
-  {
-    $id: '69539742cf4bca107f02',
-    username: 'testtrader',
-    name: 'Test Trader',
-    email: 'trader@example.com',
-    role: 'trader'
-  },
-  {
-    $id: '69539743c3f75f5cc817',
-    username: 'testadmin',
-    name: 'Test Admin',
-    email: 'admin@example.com',
-    role: 'admin'
-  },
-  {
-    $id: '69539744b3bf26fbb5a9',
-    username: 'testfarmer',
-    name: 'Test Farmer',
-    email: 'farmer@example.com',
-    role: 'trader'
-  }
+  { email: 'kennykentola8@gmail.com', username: 'kennyk', name: 'ademola peter kehinde', role: 'viewer' },
+  { email: 'test@example.com', username: 'testerk', name: 'tester kenn', role: 'trader' },
+  { email: 'peterkehindeademola@gmail.com', username: 'peterk', name: 'ademola peter kehinde', role: 'admin' },
+  { email: 'buyer@example.com', username: 'testbuyer', name: 'Test Buyer', role: 'viewer' },
+  { email: 'trader@example.com', username: 'testtrader', name: 'Test Trader', role: 'trader' },
+  { email: 'admin@example.com', username: 'testadmin', name: 'Test Admin', role: 'admin' },
+  { email: 'farmer@example.com', username: 'testfarmer', name: 'Test Farmer', role: 'trader' }
 ];
 
-async function populateUsers() {
+async function syncUsers() {
   try {
-    console.log('Populating users collection...');
+    console.log('Syncing users by email...\n');
 
     for (const user of users) {
       try {
-        await databases.createDocument(databaseId, 'users', user.$id, {
-          username: user.username,
-          name: user.name,
-          email: user.email,
-          passwordHash: '',
-          createdAt: new Date().toISOString(),
-          role: user.role
-        });
-        console.log(`Added user: ${user.email} with role ${user.role}`);
-      } catch (error) {
-        if (error.code === 409) {
-          console.log(`User ${user.email} already exists, updating role...`);
-          await databases.updateDocument(databaseId, 'users', user.$id, {
+        // First, check if user already exists by email
+        const existing = await databases.listDocuments(databaseId, COLLECTION_USERS, [
+          Query.equal('email', [user.email])
+        ]);
+
+        if (existing.documents.length > 0) {
+          // Update existing user
+          const docId = existing.documents[0].$id;
+          await databases.updateDocument(databaseId, COLLECTION_USERS, docId, {
             role: user.role
           });
+          console.log(`✓ Updated role for ${user.email}: ${user.role}`);
         } else {
-          console.error(`Error adding user ${user.email}:`, error);
+          // Create new user - we need to use the user's auth ID
+          // For now, create with a unique ID (the actual ID will be set when they register)
+          await databases.createDocument(databaseId, COLLECTION_USERS, ID.unique(), {
+            username: user.username,
+            name: user.name,
+            email: user.email,
+            passwordHash: '',
+            createdAt: new Date().toISOString(),
+            role: user.role
+          });
+          console.log(`✓ Created user: ${user.email} with role ${user.role}`);
         }
+      } catch (error) {
+        console.log(`✗ Error with ${user.email}:`, error.message);
       }
     }
 
-    console.log('Users populated successfully!');
+    console.log('\n--- User Sync Complete ---');
   } catch (error) {
-    console.error('Error populating users:', error);
+    console.error('Error syncing users:', error);
   }
 }
 
-populateUsers();
+// Import Query from appwrite
+import { Query } from 'appwrite';
+
+syncUsers();

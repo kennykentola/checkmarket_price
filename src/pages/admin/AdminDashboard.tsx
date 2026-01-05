@@ -1,17 +1,18 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../../services/api';
 import { Market, Commodity, Category } from '@/types';
-import { 
-  BuildingStorefrontIcon, 
-  TagIcon, 
+import {
+  BuildingStorefrontIcon,
+  TagIcon,
   PlusIcon,
   MapPinIcon,
   TrashIcon,
   PhotoIcon,
   SwatchIcon,
   BarsArrowUpIcon,
-  BarsArrowDownIcon
+  BarsArrowDownIcon,
+  CogIcon
 } from '@heroicons/react/24/outline';
 
 export const AdminDashboard = () => {
@@ -30,6 +31,9 @@ export const AdminDashboard = () => {
     categories: 'asc',
     commodities: 'asc'
   });
+
+  // Commodity Sorting State
+  const [commoditySortField, setCommoditySortField] = useState<'name' | 'category' | 'unit'>('name');
 
   // Market Filtering & Sorting State
   const [marketSortField, setMarketSortField] = useState<'name' | 'location'>('name');
@@ -100,13 +104,15 @@ export const AdminDashboard = () => {
   const handleAddMarket = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!marketName || !marketLoc) return;
-    
+
     try {
       await api.addMarket({ name: marketName, location: marketLoc });
       showNotification(`Market "${marketName}" added successfully`, 'success');
       setMarketName('');
       setMarketLoc('');
       loadData();
+      // Dispatch event to refresh buyer pages
+      window.dispatchEvent(new CustomEvent('dataUpdated', { detail: { type: 'market' } }));
     } catch (error) {
       showNotification('Failed to add market', 'error');
     }
@@ -167,7 +173,7 @@ export const AdminDashboard = () => {
       showNotification('Please fill all fields', 'error');
       return;
     }
-    
+
     // VALIDATION CHANGE: Check Unit Length
     if (comUnit.trim().length < 2) {
       showNotification('Unit must be at least 2 characters long', 'error');
@@ -175,17 +181,19 @@ export const AdminDashboard = () => {
     }
 
     try {
-      await api.addCommodity({ 
-        name: comName, 
-        unit: comUnit, 
+      await api.addCommodity({
+        name: comName,
+        unit: comUnit,
         category: comCategory,
-        image: comImage 
+        image: comImage
       });
       showNotification(`Commodity "${comName}" added successfully`, 'success');
       setComName('');
       setComUnit('');
       setComImage('');
       loadData();
+      // Dispatch event to refresh buyer pages
+      window.dispatchEvent(new CustomEvent('dataUpdated', { detail: { type: 'commodity' } }));
     } catch (error) {
       showNotification('Failed to add commodity', 'error');
     }
@@ -235,7 +243,19 @@ export const AdminDashboard = () => {
   })();
 
   const sortedCategories = getSortedData<Category>(categories, 'categories');
-  const sortedCommodities = getSortedData<Commodity>(commodities, 'commodities');
+
+  const sortedCommodities = (() => {
+    return [...commodities].sort((a, b) => {
+      const fieldA = a[commoditySortField].toLowerCase();
+      const fieldB = b[commoditySortField].toLowerCase();
+
+      if (sortConfig.commodities === 'asc') {
+        return fieldA.localeCompare(fieldB);
+      } else {
+        return fieldB.localeCompare(fieldA);
+      }
+    });
+  })();
 
   return (
     <div className="space-y-8">
@@ -345,13 +365,22 @@ export const AdminDashboard = () => {
                       {market.location}
                     </p>
                   </div>
-                  <button 
-                    onClick={() => handleDeleteMarket(market.$id)}
-                    className="text-gray-400 hover:text-red-500 p-1 rounded-full hover:bg-red-50 transition-colors"
-                    title="Delete Market"
-                  >
-                    <TrashIcon className="h-4 w-4" />
-                  </button>
+                  <div className="flex items-center space-x-1">
+                    <Link
+                      to={`/admin/market-inventory/${market.$id}`}
+                      className="text-indigo-600 hover:text-indigo-800 p-1 rounded-full hover:bg-indigo-50 transition-colors"
+                      title="Manage Inventory"
+                    >
+                      <CogIcon className="h-4 w-4" />
+                    </Link>
+                    <button
+                      onClick={() => handleDeleteMarket(market.$id)}
+                      className="text-gray-400 hover:text-red-500 p-1 rounded-full hover:bg-red-50 transition-colors"
+                      title="Delete Market"
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                    </button>
+                  </div>
                 </li>
               ))}
               {sortedMarkets.length === 0 && (
@@ -443,13 +472,25 @@ export const AdminDashboard = () => {
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                   {commodities.length}
                 </span>
-                <button 
-                  onClick={() => toggleSort('commodities')}
-                  className="text-green-600 hover:text-green-800 p-1 rounded hover:bg-green-100"
-                  title="Sort A-Z / Z-A"
-                >
-                  {sortConfig.commodities === 'asc' ? <BarsArrowUpIcon className="h-4 w-4"/> : <BarsArrowDownIcon className="h-4 w-4"/>}
-                </button>
+                <div className="flex rounded-md shadow-sm">
+                  <select
+                    value={commoditySortField}
+                    onChange={(e) => setCommoditySortField(e.target.value as 'name' | 'category' | 'unit')}
+                    className="rounded-l-md border-gray-300 focus:border-green-500 focus:ring-green-500 sm:text-xs py-1.5 pl-2 pr-6 border-r-0"
+                    title="Sort By"
+                  >
+                    <option value="name">Name</option>
+                    <option value="category">Category</option>
+                    <option value="unit">Unit</option>
+                  </select>
+                  <button
+                    onClick={() => toggleSort('commodities')}
+                    className="inline-flex items-center rounded-r-md border border-gray-300 bg-white px-2 text-gray-500 hover:bg-gray-50 focus:border-green-500 focus:ring-green-500"
+                    title={sortConfig.commodities === 'asc' ? "Ascending" : "Descending"}
+                  >
+                    {sortConfig.commodities === 'asc' ? <BarsArrowUpIcon className="h-4 w-4"/> : <BarsArrowDownIcon className="h-4 w-4"/>}
+                  </button>
+                </div>
               </div>
             </div>
             
