@@ -1,9 +1,8 @@
-
 export enum UserRole {
-  BUYER = 'viewer',
+  BUYER = 'buyer',
   TRADER = 'trader',
   ADMIN = 'admin',
-  FARMER = 'trader'
+  FARMER = 'farmer'
 }
 
 export interface User {
@@ -27,10 +26,9 @@ export interface Category {
 export interface Commodity {
   $id: string;
   name: string;
-  unit: string; // e.g., 'kg', 'liter', 'dozen', '50kg Bag', 'Paint Bucket', etc.
+  unit: string; // e.g., 'kg', 'liter', 'dozen'
   category: string;
   image?: string; // Optional URL or Base64 string
-  basePrice?: number; // Base price for reference
 }
 
 export interface PriceEntry {
@@ -49,6 +47,8 @@ export interface PriceDataExpanded extends PriceEntry {
   commodityCategory?: string;
   commodityImage?: string;
   traderName?: string;
+  trend?: number; // Percentage change
+  trendDirection?: 'up' | 'down' | 'stable';
 }
 
 export interface FarmgateEntry {
@@ -64,8 +64,8 @@ export interface Notification {
   $id: string;
   userId: string;
   message: string;
-  type: 'alert' | 'info' | 'success' | 'price_update' | 'report';
-  read: boolean;
+  type: 'alert' | 'info' | 'success';
+  isRead: boolean;
   createdAt: string;
 }
 

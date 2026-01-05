@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, UserRole } from '../types';
 import { account, databases, client, DATABASE_ID, COLLECTION_USERS } from '../services/appwriteConfig';
-import { ID } from 'appwrite';
+import { ID, Query } from 'appwrite';
 
 interface AuthContextType {
   user: User | null;
@@ -32,20 +32,17 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
       return;
     }
 
+    // Set the session on the client
+    client.setSession(storedSession);
+
     // Temporarily suppress console.error to avoid 401 logs
     const originalConsoleError = console.error;
     console.error = () => {};
 
     try {
       const session = await account.get();
-      // Get user role from database
-      let userRole = UserRole.BUYER; // Default role
-      try {
-        const userDoc = await databases.getDocument(DATABASE_ID, COLLECTION_USERS, session.$id);
-        userRole = userDoc.role;
-      } catch {
-        // User document doesn't exist, use default role
-      }
+      // Get user role from database by email
+      let userRole = await getUserRoleByEmail(session.email);
 
       const userData: User = {
         $id: session.$id,
@@ -64,6 +61,29 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
     }
   };
 
+  // Helper function to get user role by email
+  const getUserRoleByEmail = async (email: string): Promise<UserRole> => {
+    console.log('getUserRoleByEmail called with:', email);
+    try {
+      const response = await databases.listDocuments(DATABASE_ID, COLLECTION_USERS, [
+        Query.equal('email', [email]),
+        Query.limit(1)
+      ]);
+      
+      console.log('Query response:', response.documents.length, 'documents found');
+      
+      if (response.documents.length > 0) {
+        const role = response.documents[0].role as UserRole;
+        console.log('Found role:', role);
+        return role;
+      }
+    } catch (error) {
+      console.log('Could not fetch user role from database:', error);
+    }
+    console.log('Using default role: BUYER');
+    return UserRole.BUYER; // Default role
+  };
+
   const register = async (name: string, email: string, password: string, role: UserRole) => {
     setIsLoading(true);
     try {
@@ -75,8 +95,8 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
       }
 
       // Create account
-      const user = await account.create(ID.unique(), email, password, name);
-      console.log('Account created:', user);
+      const authUser = await account.create(ID.unique(), email, password, name);
+      console.log('Account created:', authUser);
 
       // Create session
       const session = await account.createEmailPasswordSession(email, password);
@@ -87,8 +107,9 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
       const sessionInfo = await account.get();
       console.log('Session info:', sessionInfo);
 
-      // Create user in database
-      await databases.createDocument(DATABASE_ID, COLLECTION_USERS, sessionInfo.$id, {
+      // Create user in database with the auth user ID
+      console.log('Creating user document with role:', role);
+      await databases.createDocument(DATABASE_ID, COLLECTION_USERS, authUser.$id, {
         username: sessionInfo.name.replace(/\s+/g, '').toLowerCase(),
         name: sessionInfo.name,
         email: sessionInfo.email,
@@ -96,9 +117,10 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
         createdAt: new Date().toISOString(),
         role
       });
+      console.log('User document created successfully');
 
       const userData: User = {
-        $id: sessionInfo.$id,
+        $id: authUser.$id,
         name: sessionInfo.name,
         email: sessionInfo.email,
         role
@@ -122,9 +144,10 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      // Delete any existing session
+      // Delete any existing session first
       try {
         await account.deleteSession('current');
+        console.log('Deleted existing session');
       } catch {
         // No existing session, continue
       }
@@ -138,22 +161,8 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
       const sessionInfo = await account.get();
       console.log('Login session info:', sessionInfo);
 
-      // Get user role from database
-      let userRole = UserRole.BUYER; // Default role
-      try {
-        const userDoc = await databases.getDocument(DATABASE_ID, COLLECTION_USERS, sessionInfo.$id);
-        userRole = userDoc.role;
-      } catch {
-        // User document doesn't exist, create them with default role
-        await databases.createDocument(DATABASE_ID, COLLECTION_USERS, sessionInfo.$id, {
-          username: sessionInfo.name.replace(/\s+/g, '').toLowerCase(),
-          name: sessionInfo.name,
-          email: sessionInfo.email,
-          passwordHash: '',
-          createdAt: new Date().toISOString(),
-          role: UserRole.BUYER
-        });
-      }
+      // Get user role from database by email
+      const userRole = await getUserRoleByEmail(sessionInfo.email);
 
       const userData: User = {
         $id: sessionInfo.$id,
@@ -167,6 +176,8 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
       // Provide more specific error messages
       if (error.code === 401) {
         throw new Error('Invalid email or password. Please check your credentials.');
+      } else if (error.code === 429) {
+        throw new Error('Too many login attempts. Please wait a few minutes and try again.');
       } else if (error.code === 400) {
         throw new Error('Invalid login request. Please try again.');
       } else {

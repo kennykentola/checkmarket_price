@@ -28,7 +28,7 @@ export const MarketOverview = () => {
 
   useEffect(() => {
     const handleDataUpdate = (event: any) => {
-      if (event.detail.type === 'price') {
+      if (event.detail.type === 'price' || event.detail.type === 'market') {
         loadData();
       }
     };

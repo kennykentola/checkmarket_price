@@ -14,7 +14,7 @@ export const Login = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await login(email, password, role);
+    await login(email, password);
     navigate('/buyer/prices');
   };
 

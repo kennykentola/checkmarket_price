@@ -1,4 +1,4 @@
-import { Client, Users } from 'appwrite';
+import { Client, Account, ID } from 'appwrite';
 import 'dotenv/config';
 
 // Initialize Appwrite client
@@ -8,69 +8,55 @@ const client = new Client()
 
 client.headers['X-Appwrite-Key'] = process.env.APPWRITE_API_KEY; // API key from env
 
-const users = new Users(client);
+const account = new Account(client);
 
-// User data with passwords
+// User data for creating actual Appwrite accounts
 const users = [
   {
-    $id: '69528634002661a14535',
     email: 'kennykentola8@gmail.com',
     password: 'password123',
-    name: 'ademola peter kehinde',
-    role: 'viewer'
+    name: 'ademola peter kehinde'
   },
   {
-    $id: '69528634002661a14536',
     email: 'test@example.com',
     password: 'password123',
-    name: 'tester kenn',
-    role: 'trader'
+    name: 'tester kenn'
   },
   {
-    $id: '69528634002661a14537',
     email: 'peterkehindeademola@gmail.com',
     password: 'password123',
-    name: 'ademola peter kehinde',
-    role: 'admin'
+    name: 'ademola peter kehinde'
   },
   {
-    $id: '69539741581dff157989',
     email: 'buyer@example.com',
     password: 'password123',
-    name: 'Test Buyer',
-    role: 'viewer'
+    name: 'Test Buyer'
   },
   {
-    $id: '69539742cf4bca107f02',
     email: 'trader@example.com',
     password: 'password123',
-    name: 'Test Trader',
-    role: 'trader'
+    name: 'Test Trader'
   },
   {
-    $id: '69539743c3f75f5cc817',
     email: 'admin@example.com',
     password: 'password123',
-    name: 'Test Admin',
-    role: 'admin'
+    name: 'Test Admin'
   },
   {
-    $id: '69539744b3bf26fbb5a9',
     email: 'farmer@example.com',
     password: 'password123',
-    name: 'Test Farmer',
-    role: 'trader'
+    name: 'Test Farmer'
   }
 ];
 
 async function createUsers() {
   try {
-    console.log('Creating user accounts...');
+    console.log('Creating Appwrite user accounts...');
 
     for (const user of users) {
       try {
-        const userAccount = await users.create(user.$id, user.email, user.password, user.name);
-        console.log(`Created user account: ${user.email} with ID: ${userAccount.$id}`);
+        const response = await account.create(ID.unique(), user.email, user.password, user.name);
+        console.log(`Created user: ${user.email} with ID: ${response.$id}`);
       } catch (error) {
         if (error.code === 409) {
           console.log(`User ${user.email} already exists`);
