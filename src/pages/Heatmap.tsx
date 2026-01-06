@@ -38,7 +38,7 @@ export const Heatmap = () => {
 
   useEffect(() => {
     const handleDataUpdate = (event: any) => {
-      if (event.detail.type === 'price' || event.detail.type === 'market') {
+      if (event.detail.type === 'price' || event.detail.type === 'market' || event.detail.type === 'commodity') {
         loadData();
       }
     };

@@ -33,11 +33,22 @@ export const Home = () => {
       </nav>
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-indigo-600 to-purple-700 text-white py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="relative text-white py-20">
+        {/* Background Image */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src="https://images.unsplash.com/photo-1488459716781-31db52582fe9?auto=format&fit=crop&w=1920&q=80"
+            alt=""
+            className="w-full h-full object-cover"
+          />
+        </div>
+        {/* Overlay */}
+        <div className="absolute inset-0 z-10 bg-gradient-to-r from-indigo-900/80 to-purple-900/80"></div>
+        {/* Content */}
+        <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="text-4xl md:text-6xl font-bold mb-6">
-              Market Price Intelligence
+              LOCAL MARKET PRICE CHECKER 
             </h1>
             <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">
               Track commodity prices across Nigerian markets in real-time.
@@ -69,7 +80,7 @@ export const Home = () => {
               Why Choose Our Platform?
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Comprehensive market intelligence for buyers, traders, and farmers across Nigeria.
+              Comprehensive local market price check  for buyers, traders, and farmers across Nigeria.
             </p>
           </div>
 

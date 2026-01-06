@@ -192,7 +192,7 @@ export const AdminDashboard = () => {
       setComUnit('');
       setComImage('');
       loadData();
-      // Dispatch event to refresh buyer pages
+      // Dispatch event to refresh buyer/trader pages
       window.dispatchEvent(new CustomEvent('dataUpdated', { detail: { type: 'commodity' } }));
     } catch (error) {
       showNotification('Failed to add commodity', 'error');
@@ -256,6 +256,19 @@ export const AdminDashboard = () => {
       }
     });
   })();
+
+  // Commodity List Calculation
+  const commodityStats = useMemo(() => {
+    const byCategory = commodities.reduce((acc, com) => {
+      acc[com.category] = (acc[com.category] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    return {
+      total: commodities.length,
+      byCategory,
+      withImage: commodities.filter(c => c.image).length
+    };
+  }, [commodities]);
 
   return (
     <div className="space-y-8">
