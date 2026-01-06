@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '@/services/api';
 import { useAuth } from '@/context/AuthContext';
+import { useSearchParams } from 'react-router-dom';
 import { Market, Commodity } from '@/types';
+import { BuildingStorefrontIcon, MapPinIcon } from '@heroicons/react/24/outline';
 
 export const SubmitPrice = () => {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
   const [markets, setMarkets] = useState<Market[]>([]);
   const [commodities, setCommodities] = useState<Commodity[]>([]);
   
@@ -19,10 +22,41 @@ export const SubmitPrice = () => {
     Promise.all([api.getMarkets(), api.getCommodities()]).then(([m, c]) => {
       setMarkets(m);
       setCommodities(c);
-      if (m.length) setFormData(prev => ({ ...prev, marketId: m[0].$id }));
+      
+      // Check for market query parameter
+      const marketParam = searchParams.get('market');
+      if (marketParam && m.find(mkt => mkt.$id === marketParam)) {
+        setFormData(prev => ({ ...prev, marketId: marketParam }));
+      } else if (m.length) {
+        setFormData(prev => ({ ...prev, marketId: m[0].$id }));
+      }
+      
       if (c.length) setFormData(prev => ({ ...prev, commodityId: c[0].$id }));
     });
-  }, []);
+
+    // Listen for data updates from admin changes
+    const handleDataUpdate = (event: CustomEvent) => {
+      if (event.detail?.type === 'market' || event.detail?.type === 'commodity') {
+        Promise.all([api.getMarkets(), api.getCommodities()]).then(([m, c]) => {
+          setMarkets(m);
+          setCommodities(c);
+          // Update selected values if needed
+          if (m.length && !m.find(mkt => mkt.$id === formData.marketId)) {
+            setFormData(prev => ({ ...prev, marketId: m[0].$id }));
+          }
+          if (c.length && !c.find(cmd => cmd.$id === formData.commodityId)) {
+            setFormData(prev => ({ ...prev, commodityId: c[0].$id }));
+          }
+        });
+      }
+    };
+
+    window.addEventListener('dataUpdated', handleDataUpdate as EventListener);
+
+    return () => {
+      window.removeEventListener('dataUpdated', handleDataUpdate as EventListener);
+    };
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,7 +80,7 @@ export const SubmitPrice = () => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-8">
+    <div className="max-w-4xl mx-auto space-y-8">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Submit Daily Price</h1>
         <p className="mt-1 text-sm text-gray-500">Update current prices for your local market.</p>
@@ -131,6 +165,46 @@ export const SubmitPrice = () => {
             </button>
           </div>
         </form>
+      </div>
+
+      {/* Market List for Quick Navigation */}
+      <div className="bg-white shadow sm:rounded-lg overflow-hidden">
+        <div className="px-4 py-5 sm:px-6 border-b border-gray-200 flex items-center justify-between">
+          <div className="flex items-center">
+            <BuildingStorefrontIcon className="h-5 w-5 text-indigo-600 mr-2" />
+            <h3 className="text-lg leading-6 font-medium text-gray-900">Quick Market Navigation</h3>
+            <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+              {markets.length}
+            </span>
+          </div>
+        </div>
+        <div className="max-h-64 overflow-y-auto">
+          {markets.length === 0 ? (
+            <div className="px-4 py-6 text-center text-gray-500">No markets available.</div>
+          ) : (
+            <ul className="divide-y divide-gray-200">
+              {markets.map((market) => (
+                <li key={market.$id} className="px-4 py-3 hover:bg-gray-50">
+                  <button
+                    onClick={() => setFormData(prev => ({ ...prev, marketId: market.$id }))}
+                    className="w-full flex items-center justify-between text-left"
+                  >
+                    <div className="flex items-center">
+                      <MapPinIcon className="h-4 w-4 text-gray-400 mr-2" />
+                      <span className="text-sm font-medium text-gray-900">{market.name}</span>
+                      <span className="ml-2 text-xs text-gray-500">({market.location})</span>
+                    </div>
+                    {formData.marketId === market.$id && (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        Selected
+                      </span>
+                    )}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
     </div>
   );
