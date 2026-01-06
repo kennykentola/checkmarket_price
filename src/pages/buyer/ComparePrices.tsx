@@ -18,9 +18,13 @@ export const ComparePrices = () => {
     loadCommodities();
 
     // Listen for data updates from admin changes
-    const handleDataUpdate = (event: CustomEvent) => {
+    const handleDataUpdate = async (event: CustomEvent) => {
       if (event.detail?.type === 'price' || event.detail?.type === 'commodity' || event.detail?.type === 'market') {
-        loadCommodities();
+        await loadCommodities();
+        // Also reload prices to show new markets
+        const allPrices = await api.getLatestPrices();
+        const filtered = allPrices.filter(p => p.commodityId === selectedCommodity);
+        setPrices(filtered);
       }
     };
 
