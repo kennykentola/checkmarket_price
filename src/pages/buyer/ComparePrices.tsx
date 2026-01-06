@@ -19,7 +19,7 @@ export const ComparePrices = () => {
 
     // Listen for data updates from admin changes
     const handleDataUpdate = (event: CustomEvent) => {
-      if (event.detail?.type === 'price' || event.detail?.type === 'commodity') {
+      if (event.detail?.type === 'price' || event.detail?.type === 'commodity' || event.detail?.type === 'market') {
         loadCommodities();
       }
     };

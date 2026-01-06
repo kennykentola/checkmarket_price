@@ -283,7 +283,7 @@ export const AdminDashboard = () => {
                         <h3 className="text-lg leading-6 font-medium text-indigo-900">Markets</h3>
                     </div>
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                    {sortedMarkets.length}
+                    {markets.length}
                     </span>
                 </div>
                 

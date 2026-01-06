@@ -30,7 +30,9 @@ interface ApiService {
 // --- MOCK IMPLEMENTATION ---
 const mockApi: ApiService = {
   getMarkets: async () => {
-    const response = await databases.listDocuments(DATABASE_ID, COLLECTION_MARKETS);
+    const response = await databases.listDocuments(DATABASE_ID, COLLECTION_MARKETS, [
+      Query.limit(1000)
+    ]);
     return response.documents as unknown as Market[];
   },
   getMarketById: async (id: string) => {
@@ -42,7 +44,9 @@ const mockApi: ApiService = {
     }
   },
   getCommodities: async () => {
-    const response = await databases.listDocuments(DATABASE_ID, COLLECTION_COMMODITIES);
+    const response = await databases.listDocuments(DATABASE_ID, COLLECTION_COMMODITIES, [
+      Query.limit(1000)
+    ]);
     return response.documents as unknown as Commodity[];
   },
   getCategories: async () => {
@@ -55,8 +59,12 @@ const mockApi: ApiService = {
       Query.limit(1000)
     ]);
 
-    const marketsResponse = await databases.listDocuments(DATABASE_ID, COLLECTION_MARKETS);
-    const commoditiesResponse = await databases.listDocuments(DATABASE_ID, COLLECTION_COMMODITIES);
+    const marketsResponse = await databases.listDocuments(DATABASE_ID, COLLECTION_MARKETS, [
+      Query.limit(1000)
+    ]);
+    const commoditiesResponse = await databases.listDocuments(DATABASE_ID, COLLECTION_COMMODITIES, [
+      Query.limit(1000)
+    ]);
 
     const markets = marketsResponse.documents as unknown as Market[];
     const commodities = commoditiesResponse.documents as unknown as Commodity[];
@@ -90,8 +98,12 @@ const mockApi: ApiService = {
       Query.orderDesc('dateSubmitted')
     ]);
 
-    const marketsResponse = await databases.listDocuments(DATABASE_ID, COLLECTION_MARKETS);
-    const commoditiesResponse = await databases.listDocuments(DATABASE_ID, COLLECTION_COMMODITIES);
+    const marketsResponse = await databases.listDocuments(DATABASE_ID, COLLECTION_MARKETS, [
+      Query.limit(1000)
+    ]);
+    const commoditiesResponse = await databases.listDocuments(DATABASE_ID, COLLECTION_COMMODITIES, [
+      Query.limit(1000)
+    ]);
 
     const markets = marketsResponse.documents as unknown as Market[];
     const commodities = commoditiesResponse.documents as unknown as Commodity[];
@@ -186,8 +198,12 @@ const mockApi: ApiService = {
       Query.limit(1000)
     ]);
 
-    const marketsResponse = await databases.listDocuments(DATABASE_ID, COLLECTION_MARKETS);
-    const commoditiesResponse = await databases.listDocuments(DATABASE_ID, COLLECTION_COMMODITIES);
+    const marketsResponse = await databases.listDocuments(DATABASE_ID, COLLECTION_MARKETS, [
+      Query.limit(1000)
+    ]);
+    const commoditiesResponse = await databases.listDocuments(DATABASE_ID, COLLECTION_COMMODITIES, [
+      Query.limit(1000)
+    ]);
 
     const markets = marketsResponse.documents as unknown as Market[];
     const commodities = commoditiesResponse.documents as unknown as Commodity[];

@@ -96,6 +96,8 @@ export const TraderDashboard = () => {
       setMarketName('');
       setMarketLoc('');
       loadData();
+      // Dispatch event to refresh other pages
+      window.dispatchEvent(new CustomEvent('dataUpdated', { detail: { type: 'market' } }));
     } catch (error) {
       showNotification('Failed to add market', 'error');
     }
@@ -136,6 +138,8 @@ export const TraderDashboard = () => {
       setComUnit('');
       setComImage('');
       loadData();
+      // Dispatch event to refresh other pages
+      window.dispatchEvent(new CustomEvent('dataUpdated', { detail: { type: 'commodity' } }));
     } catch (error) {
       showNotification('Failed to add commodity', 'error');
     }
@@ -291,40 +295,40 @@ export const TraderDashboard = () => {
         </div>
       </div>
 
-      {/* Recent Activity Section */}
+      {/* Market List Section */}
       <div className="bg-white shadow sm:rounded-lg overflow-hidden">
         <div className="px-4 py-5 sm:px-6 border-b border-gray-200 flex items-center justify-between">
-          <h3 className="text-lg leading-6 font-medium text-gray-900">Recent Activity</h3>
-          <Link to="/trader/analytics" className="text-sm font-medium text-indigo-600 hover:text-indigo-500 flex items-center">
-            View All Analytics <ArrowRightIcon className="ml-1 h-4 w-4"/>
-          </Link>
+          <div className="flex items-center">
+            <BuildingStorefrontIcon className="h-5 w-5 text-indigo-600 mr-2" />
+            <h3 className="text-lg leading-6 font-medium text-gray-900">All Markets</h3>
+            <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+              {markets.length}
+            </span>
+          </div>
         </div>
-
-        <ul role="list" className="divide-y divide-gray-200">
-            {recentHistory.map((item) => (
-              <li key={item.$id} className="px-4 py-4 sm:px-6 hover:bg-gray-50">
-                <div className="flex items-center justify-between">
+        <div className="max-h-64 overflow-y-auto">
+          {markets.length === 0 ? (
+            <div className="px-4 py-6 text-center text-gray-500">No markets defined yet.</div>
+          ) : (
+            <ul className="divide-y divide-gray-200">
+              {markets.map((market) => (
+                <li key={market.$id} className="px-4 py-3 hover:bg-gray-50 flex items-center justify-between">
                   <div className="flex items-center">
-                    <div className="flex-shrink-0 h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center">
-                        <TagIcon className="h-4 w-4 text-gray-600" />
-                    </div>
-                    <div className="ml-4">
-                        <p className="text-sm font-medium text-gray-900 truncate">{item.commodityName}</p>
-                        <p className="text-xs text-gray-500">{item.marketName}</p>
-                    </div>
+                    <MapPinIcon className="h-4 w-4 text-gray-400 mr-2" />
+                    <span className="text-sm font-medium text-gray-900">{market.name}</span>
+                    <span className="ml-2 text-xs text-gray-500">({market.location})</span>
                   </div>
-                  <div>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      ₦{item.price.toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-              </li>
-            ))}
-            {recentHistory.length === 0 && (
-                <li className="px-4 py-6 text-center text-gray-500">No recent activity.</li>
-            )}
-        </ul>
+                  <Link
+                    to={`/trader/submit?market=${market.$id}`}
+                    className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200"
+                  >
+                    Submit Price
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
     </div>
   );
