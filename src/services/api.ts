@@ -149,13 +149,19 @@ const mockApi: ApiService = {
   },
   deleteMarket: async (id) => {
     await databases.deleteDocument(DATABASE_ID, COLLECTION_MARKETS, id);
+    // Trigger refresh for all components
+    window.dispatchEvent(new CustomEvent('dataUpdated', { detail: { type: 'market' } }));
   },
   addCommodity: async (data) => {
     const response = await databases.createDocument(DATABASE_ID, COLLECTION_COMMODITIES, ID.unique(), data);
+    // Trigger refresh for all components
+    window.dispatchEvent(new CustomEvent('dataUpdated', { detail: { type: 'commodity' } }));
     return response as unknown as Commodity;
   },
   deleteCommodity: async (id) => {
     await databases.deleteDocument(DATABASE_ID, COLLECTION_COMMODITIES, id);
+    // Trigger refresh for all components
+    window.dispatchEvent(new CustomEvent('dataUpdated', { detail: { type: 'commodity' } }));
   },
   addCategory: async (name) => {
     const response = await databases.createDocument(DATABASE_ID, COLLECTION_CATEGORIES, ID.unique(), { name });
