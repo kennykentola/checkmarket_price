@@ -22,6 +22,9 @@ export default defineConfig(({ mode }) => {
       build: {
         outDir: 'dist',
         sourcemap: false
+      },
+      preview: {
+        allowedHosts: ['market-price-o5ue.onrender.com']
       }
     };
 });
