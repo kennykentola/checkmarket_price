@@ -55,7 +55,7 @@ export const ForgotPassword = () => {
                 </svg>
               </div>
               <p className="mt-4 text-sm text-gray-600">
-                Click the link in the email to reset your password. The link will expire in 1 hour.
+                Click the link in the email to reset your password. The link expires in 1 hour.
               </p>
               <div className="mt-6">
                 <button
