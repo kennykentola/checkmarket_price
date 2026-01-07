@@ -71,6 +71,7 @@ export const AdminDashboard = () => {
       }
     } catch (error) {
       console.error("Failed to load data", error);
+      showNotification('Failed to load data. Please check your connection.', 'error');
     } finally {
       setLoading(false);
     }
