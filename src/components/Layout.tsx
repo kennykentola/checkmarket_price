@@ -15,18 +15,35 @@ import {
   CalculatorIcon,
   TruckIcon,
   BellIcon,
-  FireIcon
+  FireIcon,
+  CheckCircleIcon,
+  ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
 
 export const Layout = ({ children }: { children?: React.ReactNode }) => {
-  const { user, logout } = useAuth();
+  const { user, logout, isEmailVerified, sendVerificationEmail } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [verificationMessage, setVerificationMessage] = useState('');
+  const [isSendingVerification, setIsSendingVerification] = useState(false);
 
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const handleResendVerification = async () => {
+    setIsSendingVerification(true);
+    try {
+      await sendVerificationEmail();
+      setVerificationMessage('Verification email sent! Check your inbox.');
+    } catch (error: any) {
+      setVerificationMessage(`Failed to send: ${error.message}`);
+    } finally {
+      setIsSendingVerification(false);
+      setTimeout(() => setVerificationMessage(''), 5000);
+    }
   };
 
   const navItems = [
@@ -80,6 +97,33 @@ export const Layout = ({ children }: { children?: React.ReactNode }) => {
               <p className="text-sm text-indigo-600 font-medium">Welcome,</p>
               <p className="font-bold text-gray-900 truncate">{user.name}</p>
               <span className="text-xs uppercase tracking-wider text-indigo-500 font-bold">{user.role}</span>
+              
+              {/* Email Verification Status */}
+              <div className="mt-3">
+                {isEmailVerified ? (
+                  <div className="flex items-center text-green-600 text-xs">
+                    <CheckCircleIcon className="h-4 w-4 mr-1" />
+                    Email verified
+                  </div>
+                ) : (
+                  <div className="text-xs">
+                    <div className="flex items-center text-amber-600 mb-1">
+                      <ExclamationTriangleIcon className="h-4 w-4 mr-1" />
+                      Email not verified
+                    </div>
+                    {verificationMessage && (
+                      <p className="text-green-600 mb-1">{verificationMessage}</p>
+                    )}
+                    <button
+                      onClick={handleResendVerification}
+                      disabled={isSendingVerification}
+                      className="text-indigo-600 hover:text-indigo-800 underline text-xs"
+                    >
+                      {isSendingVerification ? 'Sending...' : 'Resend verification email'}
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

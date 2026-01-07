@@ -9,6 +9,8 @@ interface AuthContextType {
   register: (name: string, email: string, password: string, role: UserRole) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
+  sendVerificationEmail: () => Promise<void>;
+  isEmailVerified: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -16,6 +18,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children?: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
 
   useEffect(() => {
     checkSession();
@@ -51,9 +54,11 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
         role: userRole
       };
       setUser(userData);
+      setIsEmailVerified(session.emailVerification ?? false);
     } catch (error) {
       // No active session
       setUser(null);
+      setIsEmailVerified(false);
     } finally {
       setIsLoading(false);
       // Restore console.error
@@ -126,6 +131,7 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
         role
       };
       setUser(userData);
+      setIsEmailVerified(false);
     } catch (error: any) {
       console.error('Registration failed:', error);
       // Provide more specific error messages
@@ -171,6 +177,7 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
         role: userRole
       };
       setUser(userData);
+      setIsEmailVerified(sessionInfo.emailVerification ?? false);
     } catch (error: any) {
       console.error('Login failed:', error);
       // Provide more specific error messages
@@ -192,13 +199,24 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
     try {
       await account.deleteSession('current');
       setUser(null);
+      setIsEmailVerified(false);
     } catch (error) {
       console.error('Logout failed:', error);
     }
   };
 
+  const sendVerificationEmail = async () => {
+    try {
+      await account.createVerification(`${window.location.origin}/verify`);
+      console.log('Verification email sent');
+    } catch (error: any) {
+      console.error('Failed to send verification email:', error);
+      throw new Error(`Failed to send verification email: ${error.message || 'Unknown error'}`);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, login, register, logout, isLoading, sendVerificationEmail, isEmailVerified }}>
       {children}
     </AuthContext.Provider>
   );
