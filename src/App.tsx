@@ -18,6 +18,9 @@ import { MarketInventory } from './pages/admin/MarketInventory';
 import { Calculator } from './pages/Calculator';
 import { FarmerUpload } from './pages/FarmerUpload';
 import { Notifications } from './pages/Notifications';
+import { ForgotPassword } from './pages/ForgotPassword';
+import { ResetPassword } from './pages/ResetPassword';
+import { Verify } from './pages/Verify';
 import { UserRole } from '@/types';
 
 // Protected Route Wrapper
@@ -44,6 +47,9 @@ function App() {
 
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/verify" element={<Verify />} />
 
           {/* Buyer Routes */}
           <Route path="/buyer/prices" element={

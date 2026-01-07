@@ -96,6 +96,12 @@ export const Login = () => {
               </button>
             </div>
             
+            <div className="text-center">
+              <Link to="/forgot-password" className="text-sm text-indigo-600 hover:text-indigo-500">
+                Forgot your password?
+              </Link>
+            </div>
+            
             <div className="text-xs text-center text-gray-500">
               Note: use your registered  email to  login.
             </div>
