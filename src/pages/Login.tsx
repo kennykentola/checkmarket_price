@@ -9,13 +9,27 @@ export const Login = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState<UserRole>(UserRole.BUYER);
-  const { login, isLoading } = useAuth();
+  const { login, isLoading, user } = useAuth();
   const navigate = useNavigate();
+
+  const getRedirectPath = () => {
+    if (!user) return '/buyer/prices';
+    switch (user.role) {
+      case UserRole.ADMIN:
+        return '/admin/dashboard';
+      case UserRole.TRADER:
+        return '/trader/dashboard';
+      case UserRole.FARMER:
+        return '/farmgate';
+      default:
+        return '/buyer/prices';
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     await login(email, password);
-    navigate('/buyer/prices');
+    navigate(getRedirectPath());
   };
 
   return (

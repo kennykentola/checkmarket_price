@@ -13,11 +13,24 @@ export const Register = () => {
   const { register, isLoading } = useAuth();
   const navigate = useNavigate();
 
+  const getRedirectPath = (userRole: UserRole) => {
+    switch (userRole) {
+      case UserRole.ADMIN:
+        return '/admin/dashboard';
+      case UserRole.TRADER:
+        return '/trader/dashboard';
+      case UserRole.FARMER:
+        return '/farmgate';
+      default:
+        return '/buyer/prices';
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       await register(name, email, password, role);
-      navigate('/buyer/prices');
+      navigate(getRedirectPath(role));
     } catch (error) {
       console.error('Registration failed:', error);
       // Handle error (show message)
