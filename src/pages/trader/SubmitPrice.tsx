@@ -70,6 +70,32 @@ export const SubmitPrice = () => {
         traderId: user.$id,
         price: parseFloat(formData.price)
       });
+
+      // Log price submission activity
+      const market = markets.find(m => m.$id === formData.marketId);
+      const commodity = commodities.find(c => c.$id === formData.commodityId);
+      try {
+        await api.logActivity({
+          userId: user.$id,
+          userName: user.name,
+          userEmail: user.email,
+          action: 'submit_price',
+          description: `Submitted price for ${commodity?.name || 'Unknown'} in ${market?.name || 'Unknown'} market`,
+          timestamp: new Date().toISOString(),
+          ipAddress: '',
+          details: {
+            marketId: formData.marketId,
+            marketName: market?.name,
+            commodityId: formData.commodityId,
+            commodityName: commodity?.name,
+            price: parseFloat(formData.price),
+            unit: commodity?.unit
+          }
+        });
+      } catch (error) {
+        console.warn('Failed to log price submission activity:', error);
+      }
+
       setStatus('success');
       setFormData(prev => ({ ...prev, price: '' }));
       setTimeout(() => setStatus('idle'), 3000);

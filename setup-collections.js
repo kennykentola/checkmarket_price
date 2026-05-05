@@ -20,7 +20,8 @@ const COLLECTION_IDS = {
   categories: '695be618003dff1fb8b1',
   users: '695be61b0010d1f27655',
   notifications: '695be61f0033df16b47d',
-  farmgate_prices: '695be6240017b11b0669'
+  farmgate_prices: '695be6240017b11b0669',
+  activities: 'activities_collection_id'
 };
 
 async function setupDatabase() {
@@ -80,6 +81,17 @@ async function setupDatabase() {
       { key: 'dateSubmitted', type: 'string', required: true }
     ]);
 
+    await createCollection('activities', COLLECTION_IDS.activities, [
+      { key: 'userId', type: 'string', required: true },
+      { key: 'userName', type: 'string', required: false, size: 255 },
+      { key: 'userEmail', type: 'string', required: true, size: 255 },
+      { key: 'action', type: 'string', required: true, size: 50 },
+      { key: 'description', type: 'string', required: true, size: 1000 },
+      { key: 'timestamp', type: 'string', required: true, size: 100 },
+      { key: 'ipAddress', type: 'string', required: false, size: 45 },
+      { key: 'details', type: 'string', required: false, size: 10000 }
+    ]);
+
     console.log('');
     console.log('===========================================');
     console.log('Database setup complete!');
@@ -121,6 +133,10 @@ async function setupDatabase() {
     console.log('  - Read: Users (with role)');
     console.log('  - Create: Users (with role)');
     console.log('  - Update: Users (with role)');
+    console.log('');
+    console.log('activities collection:');
+    console.log('  - Read: Users (with role)');
+    console.log('  - Create: Users (with role)');
     console.log('');
     console.log('After setting permissions, refresh your browser and try logging in.');
     console.log('===========================================');

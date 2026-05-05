@@ -1,5 +1,5 @@
-import { Market, Commodity, PriceEntry, PriceDataExpanded, User, UserRole, FarmgateEntry, Notification, Category } from '@/types';
-import { databases, DATABASE_ID, COLLECTION_MARKETS, COLLECTION_COMMODITIES, COLLECTION_PRICES, COLLECTION_CATEGORIES, COLLECTION_USERS, COLLECTION_NOTIFICATIONS, COLLECTION_FARMGATE_PRICES } from './appwriteConfig';
+import { Market, Commodity, PriceEntry, PriceDataExpanded, User, UserRole, FarmgateEntry, Notification, Category, Activity } from '@/types';
+import { databases, DATABASE_ID, COLLECTION_MARKETS, COLLECTION_COMMODITIES, COLLECTION_PRICES, COLLECTION_CATEGORIES, COLLECTION_USERS, COLLECTION_NOTIFICATIONS, COLLECTION_FARMGATE_PRICES, COLLECTION_ACTIVITIES } from './appwriteConfig';
 import { ID, Query } from 'appwrite';
 
 
@@ -26,6 +26,11 @@ interface ApiService {
   getHistoricalPrices: (commodityId: string, marketId: string, days: number) => Promise<PriceEntry[]>;
   getTrendingPrices: (days: number) => Promise<PriceDataExpanded[]>;
   updatePrice: (priceId: string, newPrice: number) => Promise<PriceEntry>;
+   getUserList: () => Promise<User[]>;
+   deleteUser: (userId: string) => Promise<void>;
+   updateUserRole: (userId: string, role: UserRole) => Promise<void>;
+   logActivity: (activity: Omit<Activity, '$id'>) => Promise<Activity>;
+   getActivityLog: (userId?: string) => Promise<Activity[]>;
 }
 
 // --- MOCK IMPLEMENTATION ---
@@ -178,15 +183,26 @@ const mockApi: ApiService = {
     await databases.deleteDocument(DATABASE_ID, COLLECTION_CATEGORIES, id);
   },
   getNotifications: async (userId) => {
-    const response = await databases.listDocuments(DATABASE_ID, COLLECTION_NOTIFICATIONS, [
-      Query.equal('userId', userId),
-      Query.orderDesc('$createdAt')
-    ]);
-    return response.documents.map(doc => ({
-      ...doc,
-      isRead: doc.isRead || false,
-      createdAt: doc.createdAt || doc.$createdAt
-    })) as unknown as Notification[];
+    try {
+      const response = await databases.listDocuments(DATABASE_ID, COLLECTION_NOTIFICATIONS, [
+        Query.equal('userId', userId),
+        Query.orderDesc('$createdAt')
+      ]);
+      return response.documents.map(doc => ({
+        ...doc,
+        isRead: doc.isRead || false,
+        createdAt: doc.createdAt || doc.$createdAt
+      })) as unknown as Notification[];
+    } catch (error: any) {
+      // If user doesn't have permission to read notifications, return empty array
+      if (error.code === 401 || error.message?.includes('not authorized')) {
+        console.warn('User does not have permission to access notifications');
+        return [];
+      }
+      // For other errors, log but don't crash
+      console.error('Failed to fetch notifications:', error);
+      return [];
+    }
   },
   getHistoricalPrices: async (commodityId, marketId, days) => {
     const cutoffDate = new Date();
@@ -259,7 +275,40 @@ const mockApi: ApiService = {
     // Trigger refresh for all components
     window.dispatchEvent(new CustomEvent('dataUpdated', { detail: { type: 'price' } }));
     return response as unknown as PriceEntry;
-  }
+  },
+   getUserList: async () => {
+     const response = await databases.listDocuments(DATABASE_ID, COLLECTION_USERS, [
+       Query.limit(1000),
+       Query.orderDesc('$createdAt')
+     ]);
+     return response.documents as unknown as User[];
+   },
+   deleteUser: async (userId: string) => {
+     await databases.deleteDocument(DATABASE_ID, COLLECTION_USERS, userId);
+     // Trigger refresh for all components
+     window.dispatchEvent(new CustomEvent('dataUpdated', { detail: { type: 'user' } }));
+   },
+   updateUserRole: async (userId: string, role: UserRole) => {
+     await databases.updateDocument(DATABASE_ID, COLLECTION_USERS, userId, { role });
+     // Trigger refresh for all components
+     window.dispatchEvent(new CustomEvent('dataUpdated', { detail: { type: 'user' } }));
+   },
+   logActivity: async (activity: Omit<Activity, '$id'>) => {
+     const activityWithTimestamp = {
+       ...activity,
+       timestamp: activity.timestamp || new Date().toISOString()
+     };
+     const response = await databases.createDocument(DATABASE_ID, COLLECTION_ACTIVITIES, ID.unique(), activityWithTimestamp);
+     return response as unknown as Activity;
+   },
+   getActivityLog: async (userId?: string) => {
+     const queries = [Query.orderDesc('timestamp')];
+     if (userId) {
+       queries.push(Query.equal('userId', userId));
+     }
+     const response = await databases.listDocuments(DATABASE_ID, COLLECTION_ACTIVITIES, queries);
+     return response.documents as unknown as Activity[];
+   }
 };
 
 export const api = mockApi;

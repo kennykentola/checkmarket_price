@@ -69,6 +69,18 @@ export interface Notification {
   createdAt: string;
 }
 
+export interface Activity {
+  $id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  action: 'login' | 'logout' | 'submit_price' | 'edit_profile' | 'other';
+  description: string;
+  timestamp: string;
+  ipAddress?: string;
+  details?: Record<string, any>;
+}
+
 export interface RawPriceEntry {
   $id: string;
   dateSubmitted: string;

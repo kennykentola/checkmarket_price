@@ -17,7 +17,9 @@ import {
   BellIcon,
   FireIcon,
   CheckCircleIcon,
-  ExclamationTriangleIcon
+  ExclamationTriangleIcon,
+  UsersIcon,
+  ClockIcon
 } from '@heroicons/react/24/outline';
 
 export const Layout = ({ children }: { children?: React.ReactNode }) => {
@@ -62,6 +64,8 @@ export const Layout = ({ children }: { children?: React.ReactNode }) => {
     
     // Admin Link
     { name: 'Admin Dashboard', path: '/admin/dashboard', icon: UserGroupIcon, roles: [UserRole.ADMIN] },
+    { name: 'User Management', path: '/admin/users', icon: UsersIcon, roles: [UserRole.ADMIN] },
+    { name: 'Activity Log', path: '/admin/activity', icon: ClockIcon, roles: [UserRole.ADMIN] },
     
     // Notifications
     { name: 'Notifications', path: '/notifications', icon: BellIcon, roles: [UserRole.BUYER, UserRole.TRADER, UserRole.ADMIN, UserRole.FARMER] },

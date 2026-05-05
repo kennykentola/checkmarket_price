@@ -122,23 +122,22 @@ export const Register = () => {
               </div>
             </div>
 
-            <div>
-              <label htmlFor="role" className="block text-sm font-medium text-gray-700">
-                I am a...
-              </label>
-              <select
-                id="role"
-                name="role"
-                value={role}
-                onChange={(e) => setRole(e.target.value as UserRole)}
-                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-              >
-                <option value={UserRole.BUYER}>Buyer (View Prices)</option>
-                <option value={UserRole.TRADER}>Trader (Submit Prices)</option>
-                <option value={UserRole.ADMIN}>Admin (Manage System)</option>
-                <option value={UserRole.FARMER}>Farmer (Submit Farmgate Prices)</option>
-              </select>
-            </div>
+             <div>
+               <label htmlFor="role" className="block text-sm font-medium text-gray-700">
+                 I am a...
+               </label>
+               <select
+                 id="role"
+                 name="role"
+                 value={role}
+                 onChange={(e) => setRole(e.target.value as UserRole)}
+                 className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+               >
+                 <option value={UserRole.BUYER}>Buyer (View Prices)</option>
+                 <option value={UserRole.TRADER}>Trader (Submit Prices)</option>
+                 <option value={UserRole.FARMER}>Farmer (Submit Farmgate Prices)</option>
+               </select>
+             </div>
 
             <div>
               <button

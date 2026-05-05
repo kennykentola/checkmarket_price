@@ -9,6 +9,8 @@ export const Login = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState<UserRole>(UserRole.BUYER);
+  const [error, setError] = useState<string | null>(null);
+  const [errorDetails, setErrorDetails] = useState<string | null>(null);
   const { login, isLoading, user } = useAuth();
   const navigate = useNavigate();
 
@@ -28,8 +30,44 @@ export const Login = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await login(email, password);
-    navigate(getRedirectPath());
+    setError(null);
+    setErrorDetails(null);
+
+    // Validation
+    if (!email || !password) {
+      setError('Please enter both email and password');
+      return;
+    }
+
+    try {
+      await login(email, password);
+      navigate(getRedirectPath());
+    } catch (err: any) {
+      console.error('Login error:', err);
+      
+      // Extract error message
+      let errorMessage = 'Login failed. Please try again.';
+      let details = '';
+
+      if (err.message) {
+        if (err.message.includes('Invalid email or password')) {
+          errorMessage = 'Invalid email or password';
+          details = 'Please check that you entered the correct credentials.';
+        } else if (err.message.includes('Too many login attempts')) {
+          errorMessage = 'Too many login attempts';
+          details = 'Please wait a few minutes before trying again.';
+        } else if (err.message.includes('401')) {
+          errorMessage = 'Authentication failed';
+          details = 'The server rejected your login. Please verify your credentials and try again.';
+        } else {
+          errorMessage = err.message;
+          details = 'If this problem persists, please contact support.';
+        }
+      }
+
+      setError(errorMessage);
+      setErrorDetails(details);
+    }
   };
 
   return (
@@ -39,6 +77,9 @@ export const Login = () => {
           Sign in to MarketCheck
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
+          <Link to="/" className="font-medium text-gray-600 hover:text-gray-500 mr-4">
+            ← Back to Home
+          </Link>
           Or{' '}
           <Link to="/register" className="font-medium text-indigo-600 hover:text-indigo-500">
             create a new account
@@ -48,6 +89,37 @@ export const Login = () => {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+          {/* Error Alert */}
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-red-800">{error}</h3>
+                  {errorDetails && (
+                    <p className="text-sm text-red-700 mt-2">{errorDetails}</p>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setError(null);
+                    setErrorDetails(null);
+                  }}
+                  className="ml-auto text-red-400 hover:text-red-600"
+                >
+                  <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          )}
+
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
