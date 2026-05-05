@@ -18,6 +18,7 @@ interface ApiService {
   addMarket: (market: Omit<Market, '$id'>) => Promise<Market>;
   deleteMarket: (id: string) => Promise<void>;
   addCommodity: (commodity: Omit<Commodity, '$id'>) => Promise<Commodity>;
+  updateCommodity: (id: string, updates: Partial<Commodity>) => Promise<Commodity>;
   deleteCommodity: (id: string) => Promise<void>;
   addCategory: (name: string) => Promise<Category>;
   deleteCategory: (id: string) => Promise<void>;
@@ -154,6 +155,12 @@ const mockApi: ApiService = {
   },
   addCommodity: async (data) => {
     const response = await databases.createDocument(DATABASE_ID, COLLECTION_COMMODITIES, ID.unique(), data);
+    // Trigger refresh for all components
+    window.dispatchEvent(new CustomEvent('dataUpdated', { detail: { type: 'commodity' } }));
+    return response as unknown as Commodity;
+  },
+  updateCommodity: async (id, updates) => {
+    const response = await databases.updateDocument(DATABASE_ID, COLLECTION_COMMODITIES, id, updates);
     // Trigger refresh for all components
     window.dispatchEvent(new CustomEvent('dataUpdated', { detail: { type: 'commodity' } }));
     return response as unknown as Commodity;

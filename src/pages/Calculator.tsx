@@ -20,7 +20,7 @@ export const Calculator = () => {
   
   // Selection state
   const [selectedCommId, setSelectedCommId] = useState('');
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState('1');
 
   useEffect(() => {
     Promise.all([api.getCommodities(), api.getLatestPrices()]).then(([c, p]) => {
@@ -45,14 +45,14 @@ export const Calculator = () => {
       id: Date.now().toString(),
       commodityId: selectedCommId,
       commodityName: comm.name,
-      quantity: quantity,
+      quantity: parseInt(quantity) || 1,
       unit: comm.unit,
       estimatedPrice: avgPrice
     };
 
     setBasket([...basket, newItem]);
     setSelectedCommId('');
-    setQuantity(1);
+    setQuantity('1');
   };
 
   const removeFromBasket = (id: string) => {
@@ -89,7 +89,7 @@ export const Calculator = () => {
                 min="1"
                 className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 value={quantity}
-                onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+                onChange={(e) => setQuantity(e.target.value)}
               />
             </div>
 

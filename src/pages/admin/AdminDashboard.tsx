@@ -12,7 +12,8 @@ import {
   SwatchIcon,
   BarsArrowUpIcon,
   BarsArrowDownIcon,
-  CogIcon
+  CogIcon,
+  PencilIcon
 } from '@heroicons/react/24/outline';
 
 export const AdminDashboard = () => {
@@ -51,6 +52,10 @@ export const AdminDashboard = () => {
   const [comUnit, setComUnit] = useState('');
   const [comCategory, setComCategory] = useState('');
   const [comImage, setComImage] = useState<string>(''); // Base64 or URL
+
+  // Edit Image State
+  const [editingImageId, setEditingImageId] = useState<string | null>(null);
+  const [newImage, setNewImage] = useState<string>('');
 
   const [msg, setMsg] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
@@ -211,6 +216,53 @@ export const AdminDashboard = () => {
     }
   };
 
+  const handleEditImage = (commodityId: string) => {
+    setEditingImageId(commodityId);
+    setNewImage('');
+  };
+
+  const handleImageEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setNewImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSaveImage = async () => {
+    if (!editingImageId || !newImage) return;
+    try {
+      await api.updateCommodity(editingImageId, { image: newImage });
+      showNotification('Commodity image updated successfully', 'success');
+      setEditingImageId(null);
+      setNewImage('');
+      loadData();
+    } catch (error) {
+      showNotification('Failed to update commodity image', 'error');
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingImageId(null);
+    setNewImage('');
+  };
+
+  // Commodity List Calculation (moved up to avoid conditional hook)
+  const commodityStats = useMemo(() => {
+    const byCategory = commodities.reduce((acc, com) => {
+      acc[com.category] = (acc[com.category] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    return {
+      total: commodities.length,
+      byCategory,
+      withImage: commodities.filter(c => c.image).length
+    };
+  }, [commodities]);
+
   if (loading) return (
     <div className="flex justify-center items-center h-64">
       <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div>
@@ -259,17 +311,7 @@ export const AdminDashboard = () => {
   })();
 
   // Commodity List Calculation
-  const commodityStats = useMemo(() => {
-    const byCategory = commodities.reduce((acc, com) => {
-      acc[com.category] = (acc[com.category] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-    return {
-      total: commodities.length,
-      byCategory,
-      withImage: commodities.filter(c => c.image).length
-    };
-  }, [commodities]);
+  // (moved to top to avoid conditional hook)
 
   return (
     <div className="space-y-8">
@@ -576,31 +618,78 @@ export const AdminDashboard = () => {
             <ul className="divide-y divide-gray-200 overflow-y-auto flex-1 max-h-[400px]">
               {sortedCommodities.map(com => (
                 <li key={com.$id} className="px-4 py-3 hover:bg-gray-50 flex items-center justify-between group">
-                  <div className="flex items-center overflow-hidden">
-                    {/* Small preview of image if exists */}
-                    {com.image ? (
-                        <img src={com.image} alt={com.name} className="h-8 w-8 rounded-full object-cover mr-3 border border-gray-200 flex-shrink-0" />
-                    ) : (
-                        <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center mr-3 text-green-600 flex-shrink-0">
-                             <TagIcon className="h-4 w-4" />
+                  {editingImageId === com.$id ? (
+                    // Edit Image Mode
+                    <div className="flex-1 flex items-center space-x-3">
+                      <img src={com.image || ''} alt={com.name} className="h-8 w-8 rounded-full object-cover border border-gray-200 flex-shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-900">{com.name}</p>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageEditChange}
+                            className="text-xs border border-gray-300 rounded px-2 py-1"
+                          />
+                          <button
+                            onClick={handleSaveImage}
+                            disabled={!newImage}
+                            className="text-xs bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700 disabled:bg-gray-400"
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={handleCancelEdit}
+                            className="text-xs bg-gray-600 text-white px-2 py-1 rounded hover:bg-gray-700"
+                          >
+                            Cancel
+                          </button>
                         </div>
-                    )}
-                    <div className="truncate">
-                        <p className="text-sm font-medium text-gray-900 truncate">{com.name}</p>
-                        <p className="text-xs text-gray-500 mt-0.5 truncate">
-                        <span className="bg-gray-100 px-1.5 py-0.5 rounded text-gray-600">{com.category}</span>
-                        <span className="mx-1 text-gray-300">|</span>
-                        {com.unit}
-                        </p>
+                        {newImage && (
+                          <img src={newImage} alt="New Preview" className="h-8 w-8 rounded-full object-cover mt-1 border border-green-300" />
+                        )}
+                      </div>
                     </div>
-                  </div>
-                   <button 
+                  ) : (
+                    // Normal View
+                    <div className="flex items-center overflow-hidden flex-1">
+                      {/* Small preview of image if exists */}
+                      {com.image ? (
+                          <img src={com.image} alt={com.name} className="h-8 w-8 rounded-full object-cover mr-3 border border-gray-200 flex-shrink-0" />
+                      ) : (
+                          <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center mr-3 text-green-600 flex-shrink-0">
+                               <TagIcon className="h-4 w-4" />
+                          </div>
+                      )}
+                      <div className="truncate">
+                          <p className="text-sm font-medium text-gray-900 truncate">{com.name}</p>
+                          <p className="text-xs text-gray-500 mt-0.5 truncate">
+                          <span className="bg-gray-100 px-1.5 py-0.5 rounded text-gray-600">{com.category}</span>
+                          <span className="mx-1 text-gray-300">|</span>
+                          {com.unit}
+                          </p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="flex items-center space-x-1">
+                    {editingImageId !== com.$id && (
+                      <button
+                        onClick={() => handleEditImage(com.$id)}
+                        className="text-gray-400 hover:text-blue-500 p-1 rounded-full hover:bg-blue-50 transition-colors"
+                        title="Edit Image"
+                      >
+                        <PencilIcon className="h-4 w-4" />
+                      </button>
+                    )}
+                    <button 
                       onClick={() => handleDeleteCommodity(com.$id)}
-                      className="text-gray-400 hover:text-red-500 p-1 rounded-full hover:bg-red-50 transition-colors ml-2"
+                      className="text-gray-400 hover:text-red-500 p-1 rounded-full hover:bg-red-50 transition-colors"
                       title="Delete Commodity"
                     >
                       <TrashIcon className="h-4 w-4" />
                     </button>
+                  </div>
                 </li>
               ))}
               {commodities.length === 0 && (
