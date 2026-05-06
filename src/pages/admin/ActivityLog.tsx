@@ -161,7 +161,7 @@ export const ActivityLog = () => {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+<div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -176,9 +176,6 @@ export const ActivityLog = () => {
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Timestamp
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  IP Address
                 </th>
               </tr>
             </thead>
@@ -222,9 +219,6 @@ export const ActivityLog = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {activity.timestamp ? new Date(activity.timestamp).toLocaleString() : 'Unknown'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {activity.ipAddress || 'N/A'}
                   </td>
                 </tr>
               ))}

@@ -272,11 +272,19 @@ export const AdminDashboard = () => {
     </div>
   );
 
-  // Market List Calculation
+  // Market List Calculation (deduplicated by name)
   const uniqueLocations = Array.from(new Set(markets.map(m => m.location))).sort();
 
   const sortedMarkets = (() => {
-    let data = [...markets];
+    // Deduplicate markets by name (keep first occurrence)
+    const seen = new Set<string>();
+    let data = markets.filter(m => {
+      if (seen.has(m.name.toLowerCase())) {
+        return false;
+      }
+      seen.add(m.name.toLowerCase());
+      return true;
+    });
     
     // Filter
     if (marketLocationFilter) {

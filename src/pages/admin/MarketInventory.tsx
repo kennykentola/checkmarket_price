@@ -226,12 +226,16 @@ export const MarketInventory = () => {
               </div>
               <div className="rounded-xl border border-dashed border-gray-300 p-4 bg-gray-50">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Upload image file</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleMarketImageFileChange}
-                  className="block w-full text-sm text-gray-700"
-                />
+                <label className="cursor-pointer inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                  <PhotoIcon className="-ml-1 mr-2 h-5 w-5 text-gray-400" />
+                  Choose file
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleMarketImageFileChange}
+                    className="hidden"
+                  />
+                </label>
                 {imageFileName && (
                   <p className="mt-2 text-sm text-gray-500">Selected file: {imageFileName}</p>
                 )}
