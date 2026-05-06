@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../services/api';
 import { Market, Commodity, Category } from '@/types';
+import { ExternalDataSync } from '../../components/ExternalDataSync';
 import {
   BuildingStorefrontIcon,
   TagIcon,
@@ -353,6 +354,11 @@ export const AdminDashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        {/* --- EXTERNAL DATA SYNC SECTION --- */}
+        <div className="lg:col-span-3">
+          <ExternalDataSync />
+        </div>
         
         {/* --- MARKETS SECTION --- */}
         <div className="space-y-6 lg:col-span-1">

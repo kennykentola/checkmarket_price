@@ -34,7 +34,8 @@ async function setupDatabase() {
     // Create collections with specific IDs
     await createCollection('markets', COLLECTION_IDS.markets, [
       { key: 'name', type: 'string', required: true, size: 255 },
-      { key: 'location', type: 'string', required: true, size: 255 }
+      { key: 'location', type: 'string', required: true, size: 255 },
+      { key: 'image', type: 'string', required: false, size: 1000000 }
     ]);
 
     await createCollection('commodities', COLLECTION_IDS.commodities, [

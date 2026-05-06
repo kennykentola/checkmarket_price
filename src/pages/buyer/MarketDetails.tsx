@@ -93,7 +93,7 @@ export const MarketDetails = () => {
       {/* Header with Image */}
       <div className="relative h-64 bg-indigo-900 overflow-hidden group">
         <img 
-          src={getMarketImage(market.name)} 
+          src={getMarketImage(market.name, market.image)} 
           alt={market.name} 
           className="w-full h-full object-cover opacity-40 group-hover:scale-105 transition-transform duration-700"
         />

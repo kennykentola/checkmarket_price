@@ -16,6 +16,7 @@ import {
   TruckIcon,
   BellIcon,
   FireIcon,
+  MapPinIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon,
   UsersIcon,
@@ -49,6 +50,7 @@ export const Layout = ({ children }: { children?: React.ReactNode }) => {
   };
 
   const navItems = [
+    { name: 'Markets', path: '/buyer/markets', icon: MapPinIcon, roles: [UserRole.BUYER, UserRole.TRADER, UserRole.ADMIN, UserRole.FARMER] },
     { name: 'Overview', path: '/buyer/prices', icon: HomeIcon, roles: [UserRole.BUYER, UserRole.TRADER, UserRole.ADMIN, UserRole.FARMER] },
     { name: 'Compare Prices', path: '/buyer/compare', icon: ChartBarIcon, roles: [UserRole.BUYER, UserRole.TRADER, UserRole.ADMIN, UserRole.FARMER] },
     { name: 'Price Heatmap', path: '/heatmap', icon: FireIcon, roles: [UserRole.BUYER, UserRole.TRADER, UserRole.ADMIN, UserRole.FARMER] },

@@ -8,6 +8,7 @@ import { Home } from './pages/Home';
 import { PublicPrices } from './pages/PublicPrices';
 import { MarketOverview } from './pages/buyer/MarketOverview';
 import { MarketDetails } from './pages/buyer/MarketDetails';
+import { MarketList } from './pages/buyer/MarketList';
 import { ComparePrices } from './pages/buyer/ComparePrices';
 import { Heatmap } from './pages/Heatmap';
 import { SubmitPrice } from './pages/trader/SubmitPrice';
@@ -54,6 +55,12 @@ function App() {
           <Route path="/verify" element={<Verify />} />
 
           {/* Buyer Routes */}
+          <Route path="/buyer/markets" element={
+            <ProtectedRoute allowedRoles={[UserRole.BUYER, UserRole.TRADER, UserRole.ADMIN, UserRole.FARMER]}>
+              <MarketList />
+            </ProtectedRoute>
+          } />
+
           <Route path="/buyer/prices" element={
             <ProtectedRoute allowedRoles={[UserRole.BUYER, UserRole.TRADER, UserRole.ADMIN, UserRole.FARMER]}>
               <MarketOverview />
@@ -65,6 +72,8 @@ function App() {
               <MarketDetails />
             </ProtectedRoute>
           } />
+
+          <Route path="/markets" element={<MarketList />} />
 
           <Route path="/buyer/compare" element={
             <ProtectedRoute allowedRoles={[UserRole.BUYER, UserRole.TRADER, UserRole.ADMIN, UserRole.FARMER]}>

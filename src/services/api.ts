@@ -16,6 +16,7 @@ interface ApiService {
   submitPrice: (price: Omit<PriceEntry, '$id' | 'dateSubmitted'>) => Promise<PriceEntry>;
   submitFarmgatePrice: (entry: Omit<FarmgateEntry, '$id' | 'dateSubmitted'>) => Promise<FarmgateEntry>;
   addMarket: (market: Omit<Market, '$id'>) => Promise<Market>;
+  updateMarket: (id: string, updates: Partial<Market>) => Promise<Market>;
   deleteMarket: (id: string) => Promise<void>;
   addCommodity: (commodity: Omit<Commodity, '$id'>) => Promise<Commodity>;
   updateCommodity: (id: string, updates: Partial<Commodity>) => Promise<Commodity>;
@@ -150,6 +151,19 @@ const mockApi: ApiService = {
   addMarket: async (data) => {
     const response = await databases.createDocument(DATABASE_ID, COLLECTION_MARKETS, ID.unique(), data);
     // Trigger refresh
+    window.dispatchEvent(new CustomEvent('dataUpdated', { detail: { type: 'market' } }));
+    return response as unknown as Market;
+  },
+  updateMarket: async (id, updates) => {
+    const sanitizedUpdates = Object.fromEntries(
+      Object.entries(updates).filter(([, value]) => value !== undefined)
+    );
+
+    if (Object.keys(sanitizedUpdates).length === 0) {
+      throw new Error('No valid market fields were provided to update.');
+    }
+
+    const response = await databases.updateDocument(DATABASE_ID, COLLECTION_MARKETS, id, sanitizedUpdates);
     window.dispatchEvent(new CustomEvent('dataUpdated', { detail: { type: 'market' } }));
     return response as unknown as Market;
   },

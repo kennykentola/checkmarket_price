@@ -55,7 +55,15 @@ export const getItemImage = (name: string, category: string = 'Other', customIma
   }
 };
 
-export const getMarketImage = (name: string) => {
+export const getMarketImage = (name: string, customImage?: string) => {
+  // First priority: use custom image if it exists and is valid
+  if (customImage && typeof customImage === 'string' && customImage.trim().length > 0) {
+    // Validate it's a proper URL or data URI
+    if (customImage.startsWith('http') || customImage.startsWith('data:')) {
+      return customImage;
+    }
+  }
+
   const n = name.toLowerCase();
   
   if (n.includes('bodija')) return 'https://images.unsplash.com/photo-1605218427368-35b81ae2d7e5?auto=format&fit=crop&w=400&q=80';

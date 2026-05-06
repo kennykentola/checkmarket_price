@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { api } from '../../services/api';
 import { Market, PriceDataExpanded } from '@/types';
+import { getMarketImage } from '../../utils/imageHelpers';
 import {
   ArrowLeftIcon,
   PencilIcon,
@@ -9,7 +10,8 @@ import {
   XMarkIcon,
   BuildingStorefrontIcon,
   MapPinIcon,
-  CurrencyDollarIcon
+  CurrencyDollarIcon,
+  PhotoIcon
 } from '@heroicons/react/24/outline';
 
 export const MarketInventory = () => {
@@ -19,6 +21,9 @@ export const MarketInventory = () => {
   const [loading, setLoading] = useState(true);
   const [editingPrice, setEditingPrice] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
+  const [imageFileName, setImageFileName] = useState('');
+  const [isSavingImage, setIsSavingImage] = useState(false);
   const [msg, setMsg] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
   useEffect(() => {
@@ -37,6 +42,7 @@ export const MarketInventory = () => {
       ]);
 
       setMarket(marketData || null);
+      setImageUrl(marketData?.image || '');
 
       // Filter prices for this market
       const marketPrices = allPrices.filter(p => p.marketId === marketId);
@@ -57,6 +63,49 @@ export const MarketInventory = () => {
   const handleEditPrice = (priceId: string, currentPrice: number) => {
     setEditingPrice(priceId);
     setEditValue(currentPrice.toString());
+  };
+
+  const handleMarketImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 1000000) {
+      showNotification('Image file is too large. Please use a file under 1MB.', 'error');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = reader.result as string;
+      setImageUrl(result);
+      setImageFileName(file.name);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSaveImage = async () => {
+    if (!market || !imageUrl?.trim()) {
+      showNotification('Please enter a valid image URL or upload a file', 'error');
+      return;
+    }
+
+    setIsSavingImage(true);
+    try {
+      const cleanImageUrl = imageUrl.trim();
+      const updatedMarket = await api.updateMarket(market.$id, { image: cleanImageUrl });
+
+      setMarket(updatedMarket);
+      setImageUrl(updatedMarket.image || '');
+      setImageFileName('');
+
+      showNotification('Market image updated successfully', 'success');
+      window.dispatchEvent(new CustomEvent('dataUpdated', { detail: { type: 'market' } }));
+    } catch (error) {
+      console.error('Failed to update market image', error);
+      showNotification('Failed to update market image', 'error');
+    } finally {
+      setIsSavingImage(false);
+    }
   };
 
   const handleSavePrice = async (priceId: string) => {
@@ -135,6 +184,61 @@ export const MarketInventory = () => {
             {msg.text}
           </div>
         )}
+      </div>
+
+      <div className="bg-white shadow rounded-3xl border border-gray-200 overflow-hidden">
+        <div className="p-6 lg:flex lg:items-center lg:gap-6">
+          <div className="relative h-48 w-full lg:w-72 overflow-hidden rounded-3xl border border-gray-200 bg-gray-100">
+            <img
+              src={getMarketImage(market.name, market.image)}
+              alt={market.name}
+              className="h-full w-full object-cover"
+            />
+          </div>
+          <div className="mt-6 lg:mt-0 flex-1">
+            <div className="flex items-center gap-3 text-sm font-semibold text-gray-900 mb-3">
+              <PhotoIcon className="h-5 w-5 text-indigo-600" />
+              <span>Market Image</span>
+            </div>
+            <p className="text-sm text-gray-500 mb-4">
+              Update the image used across buyer pages and market details for this market.
+            </p>
+            <div className="grid gap-3">
+              <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+                <input
+                  type="url"
+                  value={imageUrl}
+                  onChange={(e) => {
+                    setImageUrl(e.target.value);
+                    setImageFileName('');
+                  }}
+                  placeholder="Paste a market image URL"
+                  className="block w-full rounded-xl border border-gray-300 bg-white py-3 px-4 text-sm text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+                <button
+                  type="button"
+                  onClick={handleSaveImage}
+                  disabled={isSavingImage}
+                  className={`inline-flex items-center justify-center rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 ${isSavingImage ? 'opacity-70 cursor-not-allowed' : ''}`}
+                >
+                  {isSavingImage ? 'Saving...' : 'Save Image'}
+                </button>
+              </div>
+              <div className="rounded-xl border border-dashed border-gray-300 p-4 bg-gray-50">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Upload image file</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleMarketImageFileChange}
+                  className="block w-full text-sm text-gray-700"
+                />
+                {imageFileName && (
+                  <p className="mt-2 text-sm text-gray-500">Selected file: {imageFileName}</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Inventory Table */}

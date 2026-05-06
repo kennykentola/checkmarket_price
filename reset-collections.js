@@ -35,7 +35,8 @@ async function resetCollections() {
 
     collectionIds.markets = await createCollection('markets', [
       { key: 'name', type: 'string', required: true },
-      { key: 'location', type: 'string', required: true }
+      { key: 'location', type: 'string', required: true },
+      { key: 'image', type: 'string', required: false, size: 1000000 }
     ]);
 
     collectionIds.commodities = await createCollection('commodities', [

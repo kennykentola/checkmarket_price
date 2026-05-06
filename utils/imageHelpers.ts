@@ -49,7 +49,7 @@ export const getItemImage = (name: string, category: string = 'Other', customIma
 export const getMarketImage = (name: string) => {
   const n = name.toLowerCase();
   
-  if (n.includes('bodija')) return 'https://images.unsplash.com/photo-1605218427368-35b81ae2d7e5?auto=format&fit=crop&w=400&q=80';
+  if (n.includes('bodija')) return 'https://images.unsplash.com/photo-1577401239170-897942555fb3?auto=format&fit=crop&w=400&q=80';
   if (n.includes('mile 12')) return 'https://images.unsplash.com/photo-1574974671999-24b745227159?auto=format&fit=crop&w=400&q=80';
   if (n.includes('dugbe')) return 'https://images.unsplash.com/photo-1577401239170-897942555fb3?auto=format&fit=crop&w=400&q=80';
   if (n.includes('wuse')) return 'https://images.unsplash.com/photo-1599933355554-44588cb7d6f1?auto=format&fit=crop&w=400&q=80';

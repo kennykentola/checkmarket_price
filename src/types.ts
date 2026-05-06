@@ -7,6 +7,7 @@ export enum UserRole {
 
 export interface User {
   $id: string;
+  $createdAt?: string;
   name: string;
   email: string;
   role: UserRole;
@@ -16,6 +17,7 @@ export interface Market {
   $id: string;
   name: string;
   location: string;
+  image?: string;
 }
 
 export interface Category {
