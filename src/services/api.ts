@@ -71,6 +71,7 @@ export const api: ApiService = {
     return data.map(p => ({ 
       ...p, 
       $id: p.id,
+      dateSubmitted: p.date_submitted, // Map Supabase snake_case to CamelCase
       marketName: p.markets?.name || 'Unknown'
     })) as unknown as PriceEntry[];
   },
@@ -95,6 +96,7 @@ export const api: ApiService = {
     return data.map(p => ({
       ...p,
       $id: p.id,
+      dateSubmitted: p.date_submitted, // Map Supabase snake_case to CamelCase
       commodityId: p.commodities.id,
       commodityName: p.commodities.name,
       commodityUnit: p.commodities.unit,
@@ -120,6 +122,7 @@ export const api: ApiService = {
     return data.map(p => ({
       ...p,
       $id: p.id,
+      dateSubmitted: p.date_submitted, // Map Supabase snake_case to CamelCase
       commodityId: p.commodities.id,
       commodityName: p.commodities.name,
       commodityUnit: p.commodities.unit,
@@ -231,11 +234,18 @@ export const api: ApiService = {
     return { ...data, $id: data.id } as unknown as PriceEntry;
   },
   getUserList: async () => {
-    return []; 
+    const { data, error } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
+    if (error) throw error;
+    return data.map(u => ({ ...u, $id: u.id, $createdAt: u.created_at })) as unknown as User[];
   },
   deleteUser: async (userId) => {
+    // In Supabase, you usually delete from auth.users via a service role or edge function
+    // For now, we delete the profile
+    await supabase.from('profiles').delete().eq('id', userId);
   },
   updateUserRole: async (userId, role) => {
+    const { error } = await supabase.from('profiles').update({ role }).eq('id', userId);
+    if (error) throw error;
   },
   logActivity: async (activity) => {
     const { data, error } = await supabase.from('activities').insert({

@@ -146,16 +146,7 @@ export const ActivityLog = () => {
         </div>
       </div>
 
-      {isDemoData && (
-        <div className="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-xl shadow-sm">
-          <div className="flex items-center">
-            <InformationCircleIcon className="h-5 w-5 text-amber-400 mr-3" />
-            <p className="text-sm text-amber-700">
-              <span className="font-bold">Mode: Demo</span> Currently showing simulated logs. Configure your Appwrite collection ID to see live data.
-            </p>
-          </div>
-        </div>
-      )}
+
 
       {/* Filters */}
       <div className="bg-white shadow-sm rounded-2xl overflow-hidden border border-gray-200">
