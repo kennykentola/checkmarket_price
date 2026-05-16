@@ -4,13 +4,29 @@ import 'dotenv/config';
 // Initialize Appwrite client
 const client = new Client()
   .setEndpoint('https://fra.cloud.appwrite.io/v1')
-  .setProject('marketprice');
+  .setProject('marketcheck-v2');
 
 client.headers['X-Appwrite-Key'] = process.env.APPWRITE_API_KEY;
 console.log('API Key loaded:', !!process.env.APPWRITE_API_KEY);
 
 const databases = new Databases(client);
 const databaseId = 'marketprice';
+
+// Function to ensure database exists
+async function ensureDatabase() {
+  try {
+    await databases.get(databaseId);
+    console.log('✓ Database "marketprice" already exists.');
+  } catch (error) {
+    if (error.code === 404) {
+      console.log('Creating database "marketprice"...');
+      await databases.create(databaseId, 'Market Price Database');
+      console.log('✓ Database "marketprice" created successfully.');
+    } else {
+      throw error;
+    }
+  }
+}
 
 // Collection IDs that match the frontend code in src/services/appwriteConfig.ts
 const COLLECTION_IDS = {
@@ -26,6 +42,7 @@ const COLLECTION_IDS = {
 
 async function setupDatabase() {
   try {
+    await ensureDatabase();
     console.log('Setting up Appwrite database...');
     console.log('Database ID:', databaseId);
     console.log('Collections to create:', Object.keys(COLLECTION_IDS));

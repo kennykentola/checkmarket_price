@@ -3,7 +3,13 @@
 export const getItemImage = (name: string, category: string = 'Other', customImage?: string) => {
   // 1. Return custom uploaded image if available
   if (customImage && customImage.trim() !== '') {
-    return customImage;
+    // If it's already a full URL, return it
+    if (customImage.startsWith('http') || customImage.startsWith('data:')) {
+      return customImage;
+    }
+    // Use Cloud Name from environment variables, fallback to 'marketcheck'
+    const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'marketcheck'; 
+    return `https://res.cloudinary.com/${cloudName}/image/upload/f_auto,q_auto,w_600/${customImage}`;
   }
 
   const n = name.toLowerCase();

@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { api } from '../../services/api';
 import { Market, Commodity, Category } from '@/types';
 import { ExternalDataSync } from '../../components/ExternalDataSync';
+import { uploadToCloudinary } from '@/utils/cloudinary';
+import { getItemImage, getMarketImage } from '@/utils/imageHelpers';
 import {
   BuildingStorefrontIcon,
   TagIcon,
@@ -16,7 +18,8 @@ import {
   CogIcon,
   PencilIcon,
   UsersIcon,
-  ClockIcon
+  ClockIcon,
+  ArrowPathIcon
 } from '@heroicons/react/24/outline';
 
 export const AdminDashboard = () => {
@@ -41,6 +44,9 @@ export const AdminDashboard = () => {
 
   // Market Filtering & Sorting State
   const [marketSortField, setMarketSortField] = useState<'name' | 'location'>('name');
+  const [isUploading, setIsUploading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedEditFile, setSelectedEditFile] = useState<File | null>(null);
   const [marketLocationFilter, setMarketLocationFilter] = useState<string>('');
 
   // Market Form State
@@ -193,6 +199,8 @@ export const AdminDashboard = () => {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setSelectedFile(file);
+      // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setComImage(reader.result as string);
@@ -208,28 +216,38 @@ export const AdminDashboard = () => {
       return;
     }
 
-    // VALIDATION CHANGE: Check Unit Length
     if (comUnit.trim().length < 2) {
       showNotification('Unit must be at least 2 characters long', 'error');
       return;
     }
 
     try {
+      setIsUploading(true);
+      let cloudinaryId = '';
+      
+      if (selectedFile) {
+        cloudinaryId = await uploadToCloudinary(selectedFile);
+      }
+
       await api.addCommodity({
         name: comName,
         unit: comUnit,
         category: comCategory,
-        image: comImage
+        image: cloudinaryId // SAVE THE CLOUDINARY ID, NOT BASE64
       });
+      
       showNotification(`Commodity "${comName}" added successfully`, 'success');
       setComName('');
       setComUnit('');
       setComImage('');
+      setSelectedFile(null);
       loadData();
-      // Dispatch event to refresh buyer/trader pages
       window.dispatchEvent(new CustomEvent('dataUpdated', { detail: { type: 'commodity' } }));
     } catch (error) {
+      console.error(error);
       showNotification('Failed to add commodity', 'error');
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -252,6 +270,7 @@ export const AdminDashboard = () => {
   const handleImageEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setSelectedEditFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setNewImage(reader.result as string);
@@ -261,15 +280,21 @@ export const AdminDashboard = () => {
   };
 
   const handleSaveImage = async () => {
-    if (!editingImageId || !newImage) return;
+    if (!editingImageId || !selectedEditFile) return;
     try {
-      await api.updateCommodity(editingImageId, { image: newImage });
+      setIsUploading(true);
+      const cloudinaryId = await uploadToCloudinary(selectedEditFile);
+      
+      await api.updateCommodity(editingImageId, { image: cloudinaryId });
       showNotification('Commodity image updated successfully', 'success');
       setEditingImageId(null);
       setNewImage('');
+      setSelectedEditFile(null);
       loadData();
     } catch (error) {
       showNotification('Failed to update commodity image', 'error');
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -590,6 +615,8 @@ export const AdminDashboard = () => {
                 <button 
                   type="submit" 
                   className="inline-flex justify-center items-center p-2 border border-transparent rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none"
+                  aria-label="Add new category"
+                  title="Add Category"
                 >
                   <PlusIcon className="h-5 w-5" />
                 </button>
@@ -670,10 +697,13 @@ export const AdminDashboard = () => {
                     value={comName} 
                     onChange={(e) => setComName(e.target.value)}
                   />
+                   <label htmlFor="commodity-category-select" className="sr-only">Commodity Category</label>
                    <select
+                    id="commodity-category-select"
                     className="block w-full border border-gray-300 rounded-md shadow-sm p-2 text-sm focus:ring-green-500 focus:border-green-500"
                     value={comCategory}
                     onChange={(e) => setComCategory(e.target.value)}
+                    title="Select Commodity Category"
                   >
                     {categories.length === 0 && <option value="">No Categories</option>}
                     {categories.map(cat => (
@@ -706,15 +736,24 @@ export const AdminDashboard = () => {
                     
                     <button 
                       type="submit" 
-                      className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none"
-                      title="Add Commodity"
-                      aria-label="Add new commodity"
+                      disabled={isUploading}
+                      className={`inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${isUploading ? 'bg-green-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'} focus:outline-none`}
+                      title={isUploading ? "Uploading to Cloudinary..." : "Add Commodity"}
+                      aria-label={isUploading ? "Uploading to Cloudinary" : "Add new commodity"}
                     >
-                      Add
+                      {isUploading ? (
+                        <ArrowPathIcon className="h-5 w-5 animate-spin mr-1" />
+                      ) : (
+                        'Add'
+                      )}
                     </button>
                   </div>
                   
-                  {comImage && (
+                  {isUploading && (
+                    <p className="text-[10px] text-green-600 font-medium animate-pulse">Uploading photo to Cloudinary CDN...</p>
+                  )}
+                  
+                  {comImage && !isUploading && (
                     <div className="h-12 w-full relative rounded overflow-hidden border border-gray-300">
                         <img src={comImage} alt="Preview" className="h-full w-full object-cover" />
                     </div>
@@ -730,49 +769,52 @@ export const AdminDashboard = () => {
                   {editingImageId === com.$id ? (
                     // Edit Image Mode
                     <div className="flex-1 flex items-center space-x-3">
-                      <img src={com.image || ''} alt={com.name} className="h-8 w-8 rounded-full object-cover border border-gray-200 flex-shrink-0" />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">{com.name}</p>
-                        <div className="flex items-center space-x-2 mt-1">
+                      <img src={getItemImage(com.name, com.category, newImage || com.image)} alt={com.name} className="h-10 w-10 rounded-full object-cover border-2 border-indigo-200 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-gray-900 truncate">{com.name}</p>
+                        <div className="flex flex-wrap items-center gap-2 mt-2">
                           <input
                             id={`edit-commodity-image-${com.$id}`}
                             type="file"
                             accept="image/*"
                             onChange={handleImageEditChange}
-                            className="text-xs border border-gray-300 rounded px-2 py-1"
+                            className="text-[10px] border border-gray-300 rounded bg-white px-2 py-1 max-w-[120px] sm:max-w-xs"
                             title="Choose new image"
                             aria-label="Upload new commodity image"
                           />
-                          <button
-                            onClick={handleSaveImage}
-                            disabled={!newImage}
-                            className="text-xs bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700 disabled:bg-gray-400"
-                          >
-                            Save
-                          </button>
-                          <button
-                            onClick={handleCancelEdit}
-                            className="text-xs bg-gray-600 text-white px-2 py-1 rounded hover:bg-gray-700"
-                          >
-                            Cancel
-                          </button>
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={handleSaveImage}
+                              disabled={!selectedEditFile || isUploading}
+                              className={`text-xs px-3 py-1 rounded shadow-sm font-bold text-white transition-all ${(!selectedEditFile || isUploading) ? 'bg-gray-300 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700 active:scale-95'}`}
+                            >
+                              {isUploading ? (
+                                <ArrowPathIcon className="h-3 w-3 animate-spin" />
+                              ) : (
+                                'Save'
+                              )}
+                            </button>
+                            <button
+                              onClick={handleCancelEdit}
+                              disabled={isUploading}
+                              className="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded border border-gray-300 hover:bg-gray-200 transition-all active:scale-95"
+                            >
+                              Cancel
+                            </button>
+                          </div>
                         </div>
-                        {newImage && (
-                          <img src={newImage} alt="New Preview" className="h-8 w-8 rounded-full object-cover mt-1 border border-green-300" />
-                        )}
+                        {isUploading && <p className="text-[10px] text-indigo-600 mt-1 animate-pulse font-medium">Updating photo...</p>}
                       </div>
                     </div>
                   ) : (
                     // Normal View
                     <div className="flex items-center overflow-hidden flex-1">
                       {/* Small preview of image if exists */}
-                      {com.image ? (
-                          <img src={com.image} alt={com.name} className="h-8 w-8 rounded-full object-cover mr-3 border border-gray-200 flex-shrink-0" />
-                      ) : (
-                          <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center mr-3 text-green-600 flex-shrink-0">
-                               <TagIcon className="h-4 w-4" />
-                          </div>
-                      )}
+                      <img 
+                        src={getItemImage(com.name, com.category, com.image)} 
+                        alt={com.name} 
+                        className="h-8 w-8 rounded-full object-cover mr-3 border border-gray-200 flex-shrink-0" 
+                      />
                       <div className="truncate">
                           <p className="text-sm font-medium text-gray-900 truncate">{com.name}</p>
                           <p className="text-xs text-gray-500 mt-0.5 truncate">

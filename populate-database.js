@@ -4,7 +4,7 @@ import 'dotenv/config';
 // Initialize Appwrite client
 const client = new Client()
   .setEndpoint('https://fra.cloud.appwrite.io/v1')
-  .setProject('marketprice');
+  .setProject('marketcheck-v2');
 
 client.headers['X-Appwrite-Key'] = process.env.APPWRITE_API_KEY;
 

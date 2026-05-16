@@ -2,6 +2,15 @@ import { Market, Commodity, PriceEntry, PriceDataExpanded, User, UserRole, Farmg
 import { databases, DATABASE_ID, COLLECTION_MARKETS, COLLECTION_COMMODITIES, COLLECTION_PRICES, COLLECTION_CATEGORIES, COLLECTION_USERS, COLLECTION_NOTIFICATIONS, COLLECTION_FARMGATE_PRICES, COLLECTION_ACTIVITIES } from './appwriteConfig';
 import { ID, Query } from 'appwrite';
 
+// Mock data for Demo Mode Fallback when Quota is hit (Error 402)
+const DEMO_PRICES: any[] = [
+  { $id: 'demo1', commodityName: 'Yellow Maize', marketName: 'Bodija Market', price: 45000, commodityUnit: '100kg Bag', dateSubmitted: new Date().toISOString(), commodityCategory: 'Grains', trendDirection: 'up', trend: 5.2 },
+  { $id: 'demo2', commodityName: 'White Yam', marketName: 'Mile 12', price: 2500, commodityUnit: 'Large Tuber', dateSubmitted: new Date().toISOString(), commodityCategory: 'Tubers', trendDirection: 'down', trend: 2.1 },
+  { $id: 'demo3', commodityName: 'Red Palm Oil', marketName: 'Oja Oba', price: 18000, commodityUnit: '25L Gallon', dateSubmitted: new Date().toISOString(), commodityCategory: 'Oil', trendDirection: 'stable', trend: 0.0 },
+  { $id: 'demo4', commodityName: 'Broiler Chicken', marketName: 'Dugbe Market', price: 8500, commodityUnit: 'Live Bird', dateSubmitted: new Date().toISOString(), commodityCategory: 'Poultry', trendDirection: 'up', trend: 12.5 },
+  { $id: 'demo5', commodityName: 'Soya Beans', marketName: 'Akinyele', price: 52000, commodityUnit: '100kg Bag', dateSubmitted: new Date().toISOString(), commodityCategory: 'Grains', trendDirection: 'up', trend: 8.4 }
+];
+
 
 
 // --- API INTERFACE ---
@@ -38,7 +47,7 @@ interface ApiService {
 const mockApi: ApiService = {
   getMarkets: async () => {
     const response = await databases.listDocuments(DATABASE_ID, COLLECTION_MARKETS, [
-      Query.limit(1000)
+      Query.limit(30)
     ]);
     return response.documents as unknown as Market[];
   },
@@ -52,7 +61,7 @@ const mockApi: ApiService = {
   },
   getCommodities: async () => {
     const response = await databases.listDocuments(DATABASE_ID, COLLECTION_COMMODITIES, [
-      Query.limit(1000)
+      Query.limit(30)
     ]);
     return response.documents as unknown as Commodity[];
   },
@@ -61,43 +70,58 @@ const mockApi: ApiService = {
     return response.documents as unknown as Category[];
   },
   getLatestPrices: async () => {
-    const pricesResponse = await databases.listDocuments(DATABASE_ID, COLLECTION_PRICES, [
-      Query.orderDesc('$createdAt'),
-      Query.limit(1000)
-    ]);
+    const CACHE_KEY = 'marketcheck_latest_prices_cache';
+    try {
+      const pricesResponse = await databases.listDocuments(DATABASE_ID, COLLECTION_PRICES, [
+        Query.orderDesc('$createdAt'),
+        Query.limit(30)
+      ]);
 
-    const marketsResponse = await databases.listDocuments(DATABASE_ID, COLLECTION_MARKETS, [
-      Query.limit(1000)
-    ]);
-    const commoditiesResponse = await databases.listDocuments(DATABASE_ID, COLLECTION_COMMODITIES, [
-      Query.limit(1000)
-    ]);
+      const marketsResponse = await databases.listDocuments(DATABASE_ID, COLLECTION_MARKETS, [
+        Query.limit(30)
+      ]);
+      const commoditiesResponse = await databases.listDocuments(DATABASE_ID, COLLECTION_COMMODITIES, [
+        Query.limit(30)
+      ]);
 
-    const markets = marketsResponse.documents as unknown as Market[];
-    const commodities = commoditiesResponse.documents as unknown as Commodity[];
+      const markets = marketsResponse.documents as unknown as Market[];
+      const commodities = commoditiesResponse.documents as unknown as Commodity[];
 
-    // Group by commodity-market pair to get latest price
-    const latestPrices = new Map<string, any>();
-    pricesResponse.documents.forEach((price: any) => {
-      const key = `${price.commodityId}-${price.marketId}`;
-      const existing = latestPrices.get(key);
-      if (!existing || new Date(price.dateSubmitted) > new Date(existing.dateSubmitted)) {
-        latestPrices.set(key, price);
+      const latestPrices = new Map<string, any>();
+      pricesResponse.documents.forEach((price: any) => {
+        const key = `${price.commodityId}-${price.marketId}`;
+        const existing = latestPrices.get(key);
+        if (!existing || new Date(price.dateSubmitted) > new Date(existing.dateSubmitted)) {
+          latestPrices.set(key, price);
+        }
+      });
+
+      const result = Array.from(latestPrices.values()).map((p: any) => {
+        const m = markets.find(m => m.$id === p.marketId);
+        const c = commodities.find(c => c.$id === p.commodityId);
+        return {
+          ...p,
+          marketName: m?.name || 'Unknown',
+          commodityName: c?.name || 'Unknown',
+          commodityUnit: c?.unit || '?',
+          commodityCategory: c?.category || 'Other',
+          commodityImage: c?.image
+        };
+      }).sort((a, b) => new Date(b.dateSubmitted).getTime() - new Date(a.dateSubmitted).getTime());
+
+      // SAVE TO CACHE
+      localStorage.setItem(CACHE_KEY, JSON.stringify(result));
+      return result;
+
+    } catch (error: any) {
+      if (error.code === 402) {
+        console.warn("Quota hit. Attempting to load from Local Cache...");
+        const cached = localStorage.getItem(CACHE_KEY);
+        if (cached) return JSON.parse(cached);
+        return DEMO_PRICES; // Final fallback if no cache exists
       }
-    });
-
-    return Array.from(latestPrices.values()).map((p: any) => {
-      const m = markets.find(m => m.$id === p.marketId);
-      const c = commodities.find(c => c.$id === p.commodityId);
-      return {
-        ...p,
-        marketName: m?.name || 'Unknown',
-        commodityName: c?.name || 'Unknown',
-        commodityUnit: c?.unit || '?',
-        commodityCategory: c?.category || 'Other',
-        commodityImage: c?.image
-      };
-    }).sort((a, b) => new Date(b.dateSubmitted).getTime() - new Date(a.dateSubmitted).getTime());
+      throw error;
+    }
   },
   getTraderHistory: async (traderId: string) => {
     const pricesResponse = await databases.listDocuments(DATABASE_ID, COLLECTION_PRICES, [
@@ -106,10 +130,10 @@ const mockApi: ApiService = {
     ]);
 
     const marketsResponse = await databases.listDocuments(DATABASE_ID, COLLECTION_MARKETS, [
-      Query.limit(1000)
+      Query.limit(30)
     ]);
     const commoditiesResponse = await databases.listDocuments(DATABASE_ID, COLLECTION_COMMODITIES, [
-      Query.limit(1000)
+      Query.limit(30)
     ]);
 
     const markets = marketsResponse.documents as unknown as Market[];
@@ -235,51 +259,58 @@ const mockApi: ApiService = {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - days);
 
-    const pricesResponse = await databases.listDocuments(DATABASE_ID, COLLECTION_PRICES, [
-      Query.greaterThanEqual('dateSubmitted', cutoffDate.toISOString()),
-      Query.orderDesc('dateSubmitted'),
-      Query.limit(1000)
-    ]);
+    try {
+      const pricesResponse = await databases.listDocuments(DATABASE_ID, COLLECTION_PRICES, [
+        Query.greaterThanEqual('dateSubmitted', cutoffDate.toISOString()),
+        Query.orderDesc('dateSubmitted'),
+        Query.limit(30)
+      ]);
+      
+      const marketsResponse = await databases.listDocuments(DATABASE_ID, COLLECTION_MARKETS, [
+        Query.limit(30)
+      ]);
+      const commoditiesResponse = await databases.listDocuments(DATABASE_ID, COLLECTION_COMMODITIES, [
+        Query.limit(30)
+      ]);
 
-    const marketsResponse = await databases.listDocuments(DATABASE_ID, COLLECTION_MARKETS, [
-      Query.limit(1000)
-    ]);
-    const commoditiesResponse = await databases.listDocuments(DATABASE_ID, COLLECTION_COMMODITIES, [
-      Query.limit(1000)
-    ]);
+      const markets = marketsResponse.documents as unknown as Market[];
+      const commodities = commoditiesResponse.documents as unknown as Commodity[];
 
-    const markets = marketsResponse.documents as unknown as Market[];
-    const commodities = commoditiesResponse.documents as unknown as Commodity[];
+      // Group by commodity and market to find latest prices
+      const latestPrices = new Map();
+      pricesResponse.documents.forEach((price: any) => {
+        const key = `${price.commodityId}-${price.marketId}`;
+        const existing = latestPrices.get(key);
+        if (!existing || new Date(price.dateSubmitted) > new Date(existing.dateSubmitted)) {
+          latestPrices.set(key, price);
+        }
+      });
 
-    // Group by commodity and market to find latest prices
-    const latestPrices = new Map();
-    pricesResponse.documents.forEach((price: any) => {
-      const key = `${price.commodityId}-${price.marketId}`;
-      const existing = latestPrices.get(key);
-      if (!existing || new Date(price.dateSubmitted) > new Date(existing.dateSubmitted)) {
-        latestPrices.set(key, price);
+      // Simple trend calculation (Stable for now, can be expanded)
+      const trendingPrices = Array.from(latestPrices.values()).map((price: any) => {
+        const market = markets.find(m => m.$id === price.marketId);
+        const commodity = commodities.find(c => c.$id === price.commodityId);
+
+        return {
+          ...price,
+          marketName: market?.name || 'Unknown',
+          commodityName: commodity?.name || 'Unknown',
+          commodityUnit: commodity?.unit || '?',
+          commodityCategory: commodity?.category || 'Other',
+          commodityImage: commodity?.image,
+          trend: 0,
+          trendDirection: 'stable' as const
+        };
+      });
+
+      return trendingPrices.sort((a, b) => Math.abs(b.trend) - Math.abs(a.trend));
+    } catch (error: any) {
+      if (error.code === 402) {
+        console.warn("Appwrite Quota hit. Switching to Demo Mode for Trending Prices.");
+        return DEMO_PRICES;
       }
-    });
-
-    // For simplicity, just return latest prices with trend = 0 (stable)
-    // In a real implementation, you'd need to compare with previous period
-    const trendingPrices = Array.from(latestPrices.values()).map((price: any) => {
-      const market = markets.find(m => m.$id === price.marketId);
-      const commodity = commodities.find(c => c.$id === price.commodityId);
-
-      return {
-        ...price,
-        marketName: market?.name || 'Unknown',
-        commodityName: commodity?.name || 'Unknown',
-        commodityUnit: commodity?.unit || '?',
-        commodityCategory: commodity?.category || 'Other',
-        commodityImage: commodity?.image,
-        trend: 0,
-        trendDirection: 'stable' as const
-      };
-    });
-
-    return trendingPrices.sort((a, b) => Math.abs(b.trend) - Math.abs(a.trend));
+      throw error;
+    }
   },
   updatePrice: async (priceId, newPrice) => {
     const response = await databases.updateDocument(DATABASE_ID, COLLECTION_PRICES, priceId, {
@@ -292,7 +323,7 @@ const mockApi: ApiService = {
   },
    getUserList: async () => {
      const response = await databases.listDocuments(DATABASE_ID, COLLECTION_USERS, [
-       Query.limit(1000),
+       Query.limit(30),
        Query.orderDesc('$createdAt')
      ]);
      return response.documents as unknown as User[];
@@ -307,14 +338,15 @@ const mockApi: ApiService = {
      // Trigger refresh for all components
      window.dispatchEvent(new CustomEvent('dataUpdated', { detail: { type: 'user' } }));
    },
-   logActivity: async (activity: Omit<Activity, '$id'>) => {
-     const activityWithTimestamp = {
-       ...activity,
-       timestamp: activity.timestamp || new Date().toISOString()
-     };
-     const response = await databases.createDocument(DATABASE_ID, COLLECTION_ACTIVITIES, ID.unique(), activityWithTimestamp);
-     return response as unknown as Activity;
-   },
+    logActivity: async (activity) => {
+      const safeActivity = {
+        ...activity,
+        timestamp: activity.timestamp || new Date().toISOString(),
+        details: typeof activity.details === 'object' ? JSON.stringify(activity.details) : String(activity.details || '')
+      };
+      const response = await databases.createDocument(DATABASE_ID, COLLECTION_ACTIVITIES, ID.unique(), safeActivity);
+      return response as unknown as Activity;
+    },
    getActivityLog: async (userId?: string) => {
      const queries = [Query.orderDesc('timestamp')];
      if (userId) {

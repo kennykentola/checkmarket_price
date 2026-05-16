@@ -9,14 +9,22 @@ import { Link } from 'react-router-dom';
 export const MarketOverview = () => {
   const [prices, setPrices] = useState<PriceDataExpanded[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
 
   const loadData = async () => {
     try {
+      setLoading(true);
+      setError(null);
       const data = await api.getLatestPrices();
       setPrices(data);
-    } catch (error) {
-      console.error("Failed to fetch prices", error);
+    } catch (err: any) {
+      console.error("Failed to fetch prices", err);
+      if (err.code === 402 || err.message?.includes('limit')) {
+        setError("Database Quota Exceeded. The system has hit its daily read limit on Appwrite.");
+      } else {
+        setError("Failed to load prices. Please try again later.");
+      }
     } finally {
       setLoading(false);
     }
@@ -56,7 +64,24 @@ export const MarketOverview = () => {
         </div>
       </div>
 
-      {loading ? (
+      {error ? (
+        <div className="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-xl shadow-sm">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <svg className="h-6 w-6 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-bold text-amber-800 uppercase tracking-wider">Service Limitation</h3>
+              <p className="text-sm text-amber-700 mt-1">
+                {error} <br />
+                <span className="text-xs font-medium opacity-75">Live price data is currently unavailable.</span>
+              </p>
+            </div>
+          </div>
+        </div>
+      ) : loading ? (
         <div className="text-center py-20 bg-white rounded-2xl shadow-sm border border-gray-100">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
           <p className="mt-4 text-gray-500 font-medium">Fetching latest prices...</p>
