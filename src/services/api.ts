@@ -48,26 +48,52 @@ interface ApiService {
 // --- MOCK IMPLEMENTATION ---
 const mockApi: ApiService = {
   getMarkets: async () => {
-    const response = await databases.listDocuments(DATABASE_ID, COLLECTION_MARKETS, [
-      Query.limit(30)
-    ]);
-    return response.documents as unknown as Market[];
-  },
-  getMarketById: async (id: string) => {
+    const CACHE_KEY = 'marketcheck_markets_cache';
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (cached) {
+      try { return JSON.parse(cached); } catch (e) { localStorage.removeItem(CACHE_KEY); }
+    }
+    
     try {
-      const response = await databases.getDocument(DATABASE_ID, COLLECTION_MARKETS, id);
-      return response as unknown as Market;
+      const response = await databases.listDocuments(DATABASE_ID, COLLECTION_MARKETS, [
+        Query.limit(100)
+      ]);
+      const result = response.documents as unknown as Market[];
+      localStorage.setItem(CACHE_KEY, JSON.stringify(result));
+      return result;
     } catch (error) {
-      return undefined;
+      if (cached) return JSON.parse(cached);
+      throw error;
     }
   },
+  getMarketById: async (id: string) => {
+    const markets = await mockApi.getMarkets();
+    return markets.find(m => m.$id === id);
+  },
   getCommodities: async () => {
-    const response = await databases.listDocuments(DATABASE_ID, COLLECTION_COMMODITIES, [
-      Query.limit(100)
-    ]);
-    return response.documents as unknown as Commodity[];
+    const CACHE_KEY = 'marketcheck_commodities_cache';
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (cached) {
+      try { return JSON.parse(cached); } catch (e) { localStorage.removeItem(CACHE_KEY); }
+    }
+
+    try {
+      const response = await databases.listDocuments(DATABASE_ID, COLLECTION_COMMODITIES, [
+        Query.limit(100)
+      ]);
+      const result = response.documents as unknown as Commodity[];
+      localStorage.setItem(CACHE_KEY, JSON.stringify(result));
+      return result;
+    } catch (error) {
+      if (cached) return JSON.parse(cached);
+      throw error;
+    }
   },
   getCommodity: async (id: string) => {
+    const commodities = await mockApi.getCommodities();
+    const found = commodities.find(c => c.$id === id);
+    if (found) return found;
+    
     const response = await databases.getDocument(DATABASE_ID, COLLECTION_COMMODITIES, id);
     return response as unknown as Commodity;
   },
@@ -80,26 +106,34 @@ const mockApi: ApiService = {
     return response.documents as unknown as PriceEntry[];
   },
   getCategories: async () => {
-    const response = await databases.listDocuments(DATABASE_ID, COLLECTION_CATEGORIES);
-    return response.documents as unknown as Category[];
+    const CACHE_KEY = 'marketcheck_categories_cache';
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (cached) {
+      try { return JSON.parse(cached); } catch (e) { localStorage.removeItem(CACHE_KEY); }
+    }
+
+    try {
+      const response = await databases.listDocuments(DATABASE_ID, COLLECTION_CATEGORIES);
+      const result = response.documents as unknown as Category[];
+      localStorage.setItem(CACHE_KEY, JSON.stringify(result));
+      return result;
+    } catch (error) {
+      if (cached) return JSON.parse(cached);
+      throw error;
+    }
   },
   getLatestPrices: async () => {
     const CACHE_KEY = 'marketcheck_latest_prices_cache';
+    const cached = localStorage.getItem(CACHE_KEY);
+    
     try {
       const pricesResponse = await databases.listDocuments(DATABASE_ID, COLLECTION_PRICES, [
         Query.orderDesc('$createdAt'),
         Query.limit(30)
       ]);
 
-      const marketsResponse = await databases.listDocuments(DATABASE_ID, COLLECTION_MARKETS, [
-        Query.limit(30)
-      ]);
-      const commoditiesResponse = await databases.listDocuments(DATABASE_ID, COLLECTION_COMMODITIES, [
-        Query.limit(30)
-      ]);
-
-      const markets = marketsResponse.documents as unknown as Market[];
-      const commodities = commoditiesResponse.documents as unknown as Commodity[];
+      const markets = await mockApi.getMarkets();
+      const commodities = await mockApi.getCommodities();
 
       const latestPrices = new Map<string, any>();
       pricesResponse.documents.forEach((price: any) => {
@@ -111,8 +145,8 @@ const mockApi: ApiService = {
       });
 
       const result = Array.from(latestPrices.values()).map((p: any) => {
-        const m = markets.find(m => m.$id === p.marketId);
-        const c = commodities.find(c => c.$id === p.commodityId);
+        const m = markets.find(mark => mark.$id === p.marketId);
+        const c = commodities.find(com => com.$id === p.commodityId);
         return {
           ...p,
           marketName: m?.name || 'Unknown',
@@ -123,48 +157,56 @@ const mockApi: ApiService = {
         };
       }).sort((a, b) => new Date(b.dateSubmitted).getTime() - new Date(a.dateSubmitted).getTime());
 
-      // SAVE TO CACHE
       localStorage.setItem(CACHE_KEY, JSON.stringify(result));
       return result;
 
     } catch (error: any) {
+      console.warn("API Error (likely quota):", error.message);
+      if (cached) {
+        console.log("Serving Latest Prices from Local Cache");
+        return JSON.parse(cached);
+      }
       if (error.code === 402) {
-        console.warn("Quota hit. Attempting to load from Local Cache...");
-        const cached = localStorage.getItem(CACHE_KEY);
-        if (cached) return JSON.parse(cached);
-        return DEMO_PRICES; // Final fallback if no cache exists
+        console.warn("Quota hit. Serving Demo Data.");
+        return DEMO_PRICES;
       }
       throw error;
     }
   },
   getTraderHistory: async (traderId: string) => {
-    const pricesResponse = await databases.listDocuments(DATABASE_ID, COLLECTION_PRICES, [
-      Query.equal('traderId', traderId),
-      Query.orderDesc('dateSubmitted')
-    ]);
+    const CACHE_KEY = `marketcheck_trader_history_${traderId}`;
+    const cached = localStorage.getItem(CACHE_KEY);
 
-    const marketsResponse = await databases.listDocuments(DATABASE_ID, COLLECTION_MARKETS, [
-      Query.limit(30)
-    ]);
-    const commoditiesResponse = await databases.listDocuments(DATABASE_ID, COLLECTION_COMMODITIES, [
-      Query.limit(30)
-    ]);
+    try {
+      const pricesResponse = await databases.listDocuments(DATABASE_ID, COLLECTION_PRICES, [
+        Query.equal('traderId', traderId),
+        Query.orderDesc('dateSubmitted'),
+        Query.limit(50)
+      ]);
 
-    const markets = marketsResponse.documents as unknown as Market[];
-    const commodities = commoditiesResponse.documents as unknown as Commodity[];
+      const markets = await mockApi.getMarkets();
+      const commodities = await mockApi.getCommodities();
 
-    return pricesResponse.documents.map((p: any) => {
-      const m = markets.find(m => m.$id === p.marketId);
-      const c = commodities.find(c => c.$id === p.commodityId);
-      return {
-        ...p,
-        marketName: m?.name || 'Unknown',
-        commodityName: c?.name || 'Unknown',
-        commodityUnit: c?.unit || '?',
-        commodityCategory: c?.category || 'Other',
-        commodityImage: c?.image
-      };
-    }).sort((a, b) => new Date(b.dateSubmitted).getTime() - new Date(a.dateSubmitted).getTime());
+      const result = pricesResponse.documents.map((p: any) => {
+        const m = markets.find(mark => mark.$id === p.marketId);
+        const c = commodities.find(com => com.$id === p.commodityId);
+        return {
+          ...p,
+          marketName: m?.name || 'Unknown',
+          commodityName: c?.name || 'Unknown',
+          commodityUnit: c?.unit || '?',
+          commodityCategory: c?.category || 'Other',
+          commodityImage: c?.image
+        };
+      }).sort((a, b) => new Date(b.dateSubmitted).getTime() - new Date(a.dateSubmitted).getTime());
+
+      localStorage.setItem(CACHE_KEY, JSON.stringify(result));
+      return result;
+    } catch (error: any) {
+      if (cached) return JSON.parse(cached);
+      if (error.code === 402) return [];
+      throw error;
+    }
   },
   submitPrice: async (priceData) => {
     const newPrice = {
