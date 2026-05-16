@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../services/api';
 import { PriceDataExpanded } from '@/types';
 import {
@@ -22,13 +23,13 @@ export const DailyMarketTrends = () => {
       try {
         setLoading(true);
         const trends = await api.getTrendingPrices(selectedPeriod);
-        setTrendingPrices(trends.slice(0, 8)); // Show top 8 trending items
+        setTrendingPrices(trends.slice(0, 40)); // Show top 40 trending items
 
         // Update featured items occasionally (every few loads)
         if (Math.random() < 0.3 || featuredItems.length === 0) { // 30% chance to update featured
           const latest = await api.getLatestPrices();
-          // Select 4 diverse featured items
-          const featured = latest.slice(0, 4);
+          // Select up to 80 diverse featured items
+          const featured = latest.slice(0, 80);
           setFeaturedItems(featured);
         }
       } catch (error) {
@@ -109,9 +110,10 @@ export const DailyMarketTrends = () => {
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {featuredItems.map((item) => (
-                  <div
+                  <Link
+                    to={`/product/${item.commodityId}`}
                     key={`featured-${item.commodityId}-${item.marketId}`}
-                    className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg p-4 border border-indigo-200 hover:shadow-md transition-all"
+                    className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg p-4 border border-indigo-200 hover:shadow-md transition-all block"
                   >
                     <div className="flex items-start space-x-3 mb-3">
                       {item.commodityImage ? (
@@ -146,7 +148,7 @@ export const DailyMarketTrends = () => {
                     <div className="mt-2 text-xs text-gray-500">
                       Updated {new Date(item.dateSubmitted).toLocaleDateString()}
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </div>
@@ -165,9 +167,10 @@ export const DailyMarketTrends = () => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {trendingPrices.map((item) => (
-                  <div
+                  <Link
+                    to={`/product/${item.commodityId}`}
                     key={`${item.commodityId}-${item.marketId}`}
-                    className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors border border-gray-200"
+                    className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors border border-gray-200 block"
                   >
                     <div className="flex items-start space-x-3 mb-3">
                       {item.commodityImage ? (
@@ -209,7 +212,7 @@ export const DailyMarketTrends = () => {
                     <div className="mt-2 text-xs text-gray-500">
                       Updated {new Date(item.dateSubmitted).toLocaleDateString()}
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}

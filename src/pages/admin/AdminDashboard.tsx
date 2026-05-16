@@ -60,6 +60,9 @@ export const AdminDashboard = () => {
   const [editingImageId, setEditingImageId] = useState<string | null>(null);
   const [newImage, setNewImage] = useState<string>('');
 
+  const [marketSearch, setMarketSearch] = useState('');
+  const [editingMarket, setEditingMarket] = useState<Market | null>(null);
+
   const [msg, setMsg] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
   const loadData = async () => {
@@ -124,6 +127,28 @@ export const AdminDashboard = () => {
       window.dispatchEvent(new CustomEvent('dataUpdated', { detail: { type: 'market' } }));
     } catch (error) {
       showNotification('Failed to add market', 'error');
+    }
+  };
+
+  const handleUpdateMarket = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingMarket) return;
+
+    try {
+      await api.updateMarket(editingMarket.$id, {
+        name: editingMarket.name,
+        location: editingMarket.location,
+        description: editingMarket.description,
+        specialties: editingMarket.specialties,
+        operatingHours: editingMarket.operatingHours,
+        established: editingMarket.established
+      });
+      showNotification(`Market "${editingMarket.name}" updated successfully`, 'success');
+      setEditingMarket(null);
+      loadData();
+      window.dispatchEvent(new CustomEvent('dataUpdated', { detail: { type: 'market' } }));
+    } catch (error) {
+      showNotification('Failed to update market', 'error');
     }
   };
 
@@ -286,9 +311,18 @@ export const AdminDashboard = () => {
       return true;
     });
     
-    // Filter
+    // Filter by Location
     if (marketLocationFilter) {
       data = data.filter(m => m.location === marketLocationFilter);
+    }
+
+    // Filter by Search Query
+    if (marketSearch) {
+      const query = marketSearch.toLowerCase();
+      data = data.filter(m => 
+        m.name.toLowerCase().includes(query) || 
+        m.location.toLowerCase().includes(query)
+      );
     }
 
     // Sort
@@ -383,37 +417,54 @@ export const AdminDashboard = () => {
                 </div>
                 
                 {/* Filters & Sorting */}
-                <div className="flex gap-2">
-                    <div className="relative flex-1">
-                        <select 
-                            value={marketLocationFilter} 
-                            onChange={(e) => setMarketLocationFilter(e.target.value)}
-                            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-xs py-1.5 pl-2 pr-6"
-                        >
-                            <option value="">All Locations</option>
-                            {uniqueLocations.map(loc => (
-                                <option key={loc} value={loc}>{loc}</option>
-                            ))}
-                        </select>
+                <div className="space-y-2">
+                    <div className="relative">
+                        <input 
+                            type="text" 
+                            placeholder="Search markets..."
+                            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-xs py-1.5 pl-2 pr-2"
+                            value={marketSearch}
+                            onChange={(e) => setMarketSearch(e.target.value)}
+                        />
                     </div>
-                    
-                    <div className="flex rounded-md shadow-sm">
-                         <select
-                            value={marketSortField}
-                            onChange={(e) => setMarketSortField(e.target.value as 'name' | 'location')}
-                            className="rounded-l-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-xs py-1.5 pl-2 pr-6 border-r-0"
-                            title="Sort By"
-                        >
-                            <option value="name">Name</option>
-                            <option value="location">Location</option>
-                        </select>
-                         <button 
-                            onClick={() => toggleSort('markets')}
-                            className="inline-flex items-center rounded-r-md border border-gray-300 bg-white px-2 text-gray-500 hover:bg-gray-50 focus:border-indigo-500 focus:ring-indigo-500"
-                            title={sortConfig.markets === 'asc' ? "Ascending" : "Descending"}
-                        >
-                            {sortConfig.markets === 'asc' ? <BarsArrowUpIcon className="h-4 w-4"/> : <BarsArrowDownIcon className="h-4 w-4"/>}
-                        </button>
+                    <div className="flex gap-2">
+                        <div className="relative flex-1">
+                            <label htmlFor="admin-market-location-filter" className="sr-only">Filter by Location</label>
+                            <select 
+                                id="admin-market-location-filter"
+                                value={marketLocationFilter} 
+                                onChange={(e) => setMarketLocationFilter(e.target.value)}
+                                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-xs py-1.5 pl-2 pr-6"
+                                title="Filter by Location"
+                            >
+                                <option value="">All Locations</option>
+                                {uniqueLocations.map(loc => (
+                                    <option key={loc} value={loc}>{loc}</option>
+                                ))}
+                            </select>
+                        </div>
+                        
+                        <div className="flex rounded-md shadow-sm">
+                            <label htmlFor="admin-market-sort-field" className="sr-only">Sort Markets By</label>
+                            <select
+                                id="admin-market-sort-field"
+                                value={marketSortField}
+                                onChange={(e) => setMarketSortField(e.target.value as 'name' | 'location')}
+                                className="rounded-l-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-xs py-1.5 pl-2 pr-6 border-r-0"
+                                title="Sort Field"
+                            >
+                                <option value="name">Name</option>
+                                <option value="location">Location</option>
+                            </select>
+                            <button 
+                                onClick={() => toggleSort('markets')}
+                                className="inline-flex items-center rounded-r-md border border-gray-300 bg-white px-2 text-gray-500 hover:bg-gray-50 focus:border-indigo-500 focus:ring-indigo-500"
+                                title={sortConfig.markets === 'asc' ? "Sort Ascending" : "Sort Descending"}
+                                aria-label={sortConfig.markets === 'asc' ? "Sort markets ascending" : "Sort markets descending"}
+                            >
+                                {sortConfig.markets === 'asc' ? <BarsArrowUpIcon className="h-4 w-4"/> : <BarsArrowDownIcon className="h-4 w-4"/>}
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -422,7 +473,9 @@ export const AdminDashboard = () => {
             <div className="p-4 bg-gray-50 border-b border-gray-100">
               <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Add New Market</h4>
               <form onSubmit={handleAddMarket} className="space-y-3">
+                 <label htmlFor="new-market-name" className="sr-only">Market Name</label>
                  <input 
+                  id="new-market-name"
                   type="text" 
                   placeholder="Market Name"
                   required 
@@ -431,7 +484,9 @@ export const AdminDashboard = () => {
                   onChange={(e) => setMarketName(e.target.value)}
                 />
                 <div className="flex gap-2">
+                  <label htmlFor="new-market-location" className="sr-only">Location</label>
                   <input 
+                    id="new-market-location"
                     type="text" 
                     placeholder="Location"
                     required 
@@ -442,6 +497,8 @@ export const AdminDashboard = () => {
                   <button 
                     type="submit" 
                     className="inline-flex justify-center items-center p-2 border border-transparent rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none"
+                    title="Add Market"
+                    aria-label="Add new market"
                   >
                     <PlusIcon className="h-5 w-5" />
                   </button>
@@ -461,6 +518,13 @@ export const AdminDashboard = () => {
                     </p>
                   </div>
                   <div className="flex items-center space-x-1">
+                    <button
+                      onClick={() => setEditingMarket(market)}
+                      className="text-indigo-600 hover:text-indigo-800 p-1 rounded-full hover:bg-indigo-50 transition-colors"
+                      title="Edit Market Details"
+                    >
+                      <PencilIcon className="h-4 w-4" />
+                    </button>
                     <Link
                       to={`/admin/market-inventory/${market.$id}`}
                       className="text-indigo-600 hover:text-indigo-800 p-1 rounded-full hover:bg-indigo-50 transition-colors"
@@ -500,10 +564,11 @@ export const AdminDashboard = () => {
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
                   {categories.length}
                 </span>
-                 <button 
+                  <button 
                   onClick={() => toggleSort('categories')}
                   className="text-purple-600 hover:text-purple-800 p-1 rounded hover:bg-purple-100"
-                  title="Sort A-Z / Z-A"
+                  title={sortConfig.categories === 'asc' ? "Sort Categories Ascending" : "Sort Categories Descending"}
+                  aria-label={sortConfig.categories === 'asc' ? "Sort categories ascending" : "Sort categories descending"}
                 >
                   {sortConfig.categories === 'asc' ? <BarsArrowUpIcon className="h-4 w-4"/> : <BarsArrowDownIcon className="h-4 w-4"/>}
                 </button>
@@ -568,11 +633,13 @@ export const AdminDashboard = () => {
                   {commodities.length}
                 </span>
                 <div className="flex rounded-md shadow-sm">
+                  <label htmlFor="admin-commodity-sort-field" className="sr-only">Sort Commodities By</label>
                   <select
+                    id="admin-commodity-sort-field"
                     value={commoditySortField}
                     onChange={(e) => setCommoditySortField(e.target.value as 'name' | 'category' | 'unit')}
                     className="rounded-l-md border-gray-300 focus:border-green-500 focus:ring-green-500 sm:text-xs py-1.5 pl-2 pr-6 border-r-0"
-                    title="Sort By"
+                    title="Sort Field"
                   >
                     <option value="name">Name</option>
                     <option value="category">Category</option>
@@ -581,7 +648,8 @@ export const AdminDashboard = () => {
                   <button
                     onClick={() => toggleSort('commodities')}
                     className="inline-flex items-center rounded-r-md border border-gray-300 bg-white px-2 text-gray-500 hover:bg-gray-50 focus:border-green-500 focus:ring-green-500"
-                    title={sortConfig.commodities === 'asc' ? "Ascending" : "Descending"}
+                    title={sortConfig.commodities === 'asc' ? "Sort Commodities Ascending" : "Sort Commodities Descending"}
+                    aria-label={sortConfig.commodities === 'asc' ? "Sort commodities ascending" : "Sort commodities descending"}
                   >
                     {sortConfig.commodities === 'asc' ? <BarsArrowUpIcon className="h-4 w-4"/> : <BarsArrowDownIcon className="h-4 w-4"/>}
                   </button>
@@ -639,6 +707,8 @@ export const AdminDashboard = () => {
                     <button 
                       type="submit" 
                       className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none"
+                      title="Add Commodity"
+                      aria-label="Add new commodity"
                     >
                       Add
                     </button>
@@ -665,10 +735,13 @@ export const AdminDashboard = () => {
                         <p className="text-sm font-medium text-gray-900">{com.name}</p>
                         <div className="flex items-center space-x-2 mt-1">
                           <input
+                            id={`edit-commodity-image-${com.$id}`}
                             type="file"
                             accept="image/*"
                             onChange={handleImageEditChange}
                             className="text-xs border border-gray-300 rounded px-2 py-1"
+                            title="Choose new image"
+                            aria-label="Upload new commodity image"
                           />
                           <button
                             onClick={handleSaveImage}
@@ -742,6 +815,116 @@ export const AdminDashboard = () => {
         </div>
 
       </div>
+
+      {/* --- MARKET EDIT MODAL --- */}
+      {editingMarket && (
+        <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+          <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onClick={() => setEditingMarket(null)}></div>
+            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+              <form onSubmit={handleUpdateMarket}>
+                <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                  <div className="sm:flex sm:items-start">
+                    <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                      <h3 className="text-xl leading-6 font-bold text-gray-900 mb-6" id="modal-title">
+                        Edit Market: {editingMarket.name}
+                      </h3>
+                      
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label htmlFor="edit-market-name" className="block text-sm font-medium text-gray-700 mb-1">Market Name</label>
+                            <input 
+                              id="edit-market-name"
+                              type="text" 
+                              className="block w-full border border-gray-300 rounded-md shadow-sm p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                              value={editingMarket.name}
+                              onChange={(e) => setEditingMarket({...editingMarket, name: e.target.value})}
+                              placeholder="Market Name"
+                            />
+                          </div>
+                          <div>
+                            <label htmlFor="edit-market-location" className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                            <input 
+                              id="edit-market-location"
+                              type="text" 
+                              className="block w-full border border-gray-300 rounded-md shadow-sm p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                              value={editingMarket.location}
+                              onChange={(e) => setEditingMarket({...editingMarket, location: e.target.value})}
+                              placeholder="Location"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Full Description</label>
+                          <textarea 
+                            rows={4}
+                            className="block w-full border border-gray-300 rounded-md shadow-sm p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                            placeholder="Tell users what makes this market special..."
+                            value={editingMarket.description || ''}
+                            onChange={(e) => setEditingMarket({...editingMarket, description: e.target.value})}
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Specialties (comma separated)</label>
+                            <input 
+                              type="text" 
+                              className="block w-full border border-gray-300 rounded-md shadow-sm p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                              placeholder="e.g. Fresh Produce, Textiles, Electronics"
+                              value={(editingMarket.specialties || []).join(', ')}
+                              onChange={(e) => setEditingMarket({...editingMarket, specialties: e.target.value.split(',').map(s => s.trim())})}
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Operating Hours</label>
+                            <input 
+                              type="text" 
+                              className="block w-full border border-gray-300 rounded-md shadow-sm p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                              placeholder="e.g. 7:00 AM - 6:00 PM"
+                              value={editingMarket.operatingHours || ''}
+                              onChange={(e) => setEditingMarket({...editingMarket, operatingHours: e.target.value})}
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Established Year</label>
+                          <input 
+                            type="text" 
+                            className="block w-full border border-gray-300 rounded-md shadow-sm p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                            placeholder="e.g. 1985"
+                            value={editingMarket.established || ''}
+                            onChange={(e) => setEditingMarket({...editingMarket, established: e.target.value})}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                  <button 
+                    type="submit" 
+                    className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm"
+                  >
+                    Save Changes
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={() => setEditingMarket(null)}
+                    className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -6,6 +6,7 @@ import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { Home } from './pages/Home';
 import { PublicPrices } from './pages/PublicPrices';
+import { ProductDetail } from './pages/ProductDetail';
 import { MarketOverview } from './pages/buyer/MarketOverview';
 import { MarketDetails } from './pages/buyer/MarketDetails';
 import { MarketList } from './pages/buyer/MarketList';
@@ -47,6 +48,7 @@ function App() {
           {/* Public Routes */}
           <Route path="/" element={<Home />} />
           <Route path="/prices" element={<PublicPrices />} />
+          <Route path="/product/:commodityId" element={<ProductDetail />} />
 
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />

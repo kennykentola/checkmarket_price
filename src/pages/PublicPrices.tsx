@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../services/api';
 import { PriceDataExpanded } from '@/types';
 import { getItemImage } from '../utils/imageHelpers';
 import {
   MapPinIcon,
-  CalendarIcon,
   ArrowTrendingUpIcon,
   ArrowTrendingDownIcon,
   MinusIcon,
@@ -118,116 +118,121 @@ export const PublicPrices = () => {
           </div>
         </div>
 
-        {/* Latest Prices Section */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-8">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-900">Latest Prices</h2>
-            <p className="text-sm text-gray-600 mt-1">Most recent price updates from all markets</p>
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
           </div>
-
-          {loading ? (
-            <div className="flex justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-            </div>
-          ) : (
-            <div className="divide-y divide-gray-200">
-              {filteredPrices.length > 0 ? filteredPrices.slice(0, 50).map((price) => (
-                <div key={price.$id} className="px-6 py-4 hover:bg-gray-50 transition-colors">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <img
-                        className="h-12 w-12 rounded-lg object-cover border border-gray-200"
-                        src={getItemImage(price.commodityName, price.commodityCategory, price.commodityImage)}
-                        alt={price.commodityName}
-                      />
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900">{price.commodityName}</h3>
-                        <div className="flex items-center text-sm text-gray-600">
-                          <MapPinIcon className="h-4 w-4 mr-1" />
-                          {price.marketName}
+        ) : (
+          <div className="space-y-8">
+            {/* Featured / Latest Prices Section */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <span className="bg-indigo-100 text-indigo-800 px-2 py-1 rounded text-sm font-medium mr-2">Featured</span>
+                Latest Market Updates
+              </h3>
+              {filteredPrices.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {filteredPrices.slice(0, 50).map((price) => (
+                    <Link
+                      to={`/product/${price.commodityId}`}
+                      key={price.$id}
+                      className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg p-4 border border-indigo-200 hover:shadow-md transition-all block"
+                    >
+                      <div className="flex items-start space-x-3 mb-3">
+                        <img
+                          src={getItemImage(price.commodityName, price.commodityCategory, price.commodityImage)}
+                          alt={price.commodityName}
+                          className="w-12 h-12 rounded-lg object-cover border border-gray-200 flex-shrink-0"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold text-gray-900 text-sm leading-tight truncate">
+                            {price.commodityName}
+                          </h4>
+                          <div className="flex items-center mt-1 text-xs text-gray-500">
+                            <MapPinIcon className="h-3 w-3 mr-1 flex-shrink-0" />
+                            <span className="truncate">{price.marketName}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-indigo-600">
-                        ₦{price.price.toLocaleString()}
-                        <span className="text-sm text-gray-500 ml-1">/ {price.commodityUnit}</span>
+
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center text-gray-700">
+                          <span className="font-bold text-lg text-indigo-600">₦{price.price.toLocaleString()}</span>
+                          <span className="text-sm text-gray-500 ml-1">/ {price.commodityUnit}</span>
+                        </div>
                       </div>
-                      <div className="text-sm text-gray-500 mt-1">
+
+                      <div className="mt-2 text-xs text-gray-500">
                         Updated {new Date(price.dateSubmitted).toLocaleDateString()}
                       </div>
-                    </div>
-                  </div>
+                    </Link>
+                  ))}
                 </div>
-              )) : (
-                <div className="px-6 py-12 text-center text-gray-500">
+              ) : (
+                <div className="bg-white rounded-lg border border-gray-200 px-6 py-12 text-center text-gray-500">
                   No prices found matching your search.
                 </div>
               )}
             </div>
-          )}
-        </div>
 
-        {/* Trending Prices Section */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-900">Price Trends</h2>
-            <p className="text-sm text-gray-600 mt-1">
-              Price movements over the selected period ({selectedPeriod === 1 ? 'today' : selectedPeriod === 7 ? 'this week' : 'this month'})
-            </p>
-          </div>
-
-          {loading ? (
-            <div className="flex justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-            </div>
-          ) : trendingPrices.length === 0 ? (
-            <div className="px-6 py-12 text-center text-gray-500">
-              No trending data available for the selected period.
-            </div>
-          ) : (
-            <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {trendingPrices.map((item) => (
-                  <div
-                    key={`${item.commodityId}-${item.marketId}`}
-                    className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors border border-gray-200"
-                  >
-                    <div className="flex justify-between items-start mb-3">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900 text-sm leading-tight">
-                          {item.commodityName}
-                        </h3>
-                        <div className="flex items-center mt-1 text-xs text-gray-500">
-                          <MapPinIcon className="h-3 w-3 mr-1" />
-                          {item.marketName}
+            {/* Trending / Price Movements Section */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded text-sm font-medium mr-2">Trending</span>
+                Price Movements
+              </h3>
+              {trendingPrices.length === 0 ? (
+                <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
+                  <p className="text-gray-500">No trending data available for the selected period.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {trendingPrices.map((item) => (
+                    <div
+                      key={`${item.commodityId}-${item.marketId}`}
+                      className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors border border-gray-200"
+                    >
+                      <div className="flex items-start space-x-3 mb-3">
+                        <img
+                          src={getItemImage(item.commodityName, item.commodityCategory, item.commodityImage)}
+                          alt={item.commodityName}
+                          className="w-10 h-10 rounded-lg object-cover border border-gray-200 flex-shrink-0"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold text-gray-900 text-sm leading-tight">
+                            {item.commodityName}
+                          </h4>
+                          <div className="flex items-center mt-1 text-xs text-gray-500">
+                            <MapPinIcon className="h-3 w-3 mr-1" />
+                            {item.marketName}
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-1 flex-shrink-0">
+                          {getTrendIcon(item.trendDirection || 'stable')}
+                          <span className={`text-sm font-semibold ${getTrendColor(item.trendDirection || 'stable')}`}>
+                            {item.trend ? formatTrend(item.trend) : '0.0%'}
+                          </span>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-1">
-                        {getTrendIcon(item.trendDirection || 'stable')}
-                        <span className={`text-sm font-semibold ${getTrendColor(item.trendDirection || 'stable')}`}>
-                          {item.trend ? formatTrend(item.trend) : '0.0%'}
-                        </span>
+
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center text-gray-700">
+                          <CurrencyDollarIcon className="h-4 w-4 mr-1" />
+                          <span className="font-bold text-lg">₦{item.price.toLocaleString()}</span>
+                          <span className="text-sm text-gray-500 ml-1">/ {item.commodityUnit}</span>
+                        </div>
+                      </div>
+
+                      <div className="mt-2 text-xs text-gray-500">
+                        Updated {new Date(item.dateSubmitted).toLocaleDateString()}
                       </div>
                     </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center text-gray-700">
-                        <CurrencyDollarIcon className="h-4 w-4 mr-1" />
-                        <span className="font-bold text-lg">₦{item.price.toLocaleString()}</span>
-                        <span className="text-sm text-gray-500 ml-1">/ {item.commodityUnit}</span>
-                      </div>
-                    </div>
-
-                    <div className="mt-2 text-xs text-gray-500">
-                      Updated {new Date(item.dateSubmitted).toLocaleDateString()}
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

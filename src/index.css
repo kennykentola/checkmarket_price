@@ -1,1 +1,6 @@
 @import "tailwindcss";
+
+/* Product detail serif typography */
+.font-serif-elegant {
+  font-family: 'Georgia', 'Times New Roman', serif;
+}

@@ -62,7 +62,7 @@ export const Layout = ({ children }: { children?: React.ReactNode }) => {
     { name: 'Submit Price', path: '/trader/submit', icon: CurrencyDollarIcon, roles: [UserRole.TRADER, UserRole.ADMIN] },
     
     // Farmer Link
-    { name: 'Farmer\'s Gate', path: '/farmgate', icon: TruckIcon, roles: [UserRole.FARMER, UserRole.ADMIN, UserRole.TRADER] },
+    { name: 'Farmer\'s Gate', path: '/farmgate', icon: TruckIcon, roles: [UserRole.FARMER, UserRole.ADMIN] },
     
     // Admin Link
     { name: 'Admin Dashboard', path: '/admin/dashboard', icon: UserGroupIcon, roles: [UserRole.ADMIN] },

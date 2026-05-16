@@ -48,7 +48,18 @@ export const MarketList = () => {
     return stats;
   }, [prices]);
 
-  const filteredMarkets = markets.filter((market) =>
+  const uniqueMarkets = useMemo(() => {
+    const unique = new Map<string, Market>();
+    markets.forEach(m => {
+      // Use name as the key to collapse visual duplicates
+      if (!unique.has(m.name)) {
+        unique.set(m.name, m);
+      }
+    });
+    return Array.from(unique.values());
+  }, [markets]);
+
+  const filteredMarkets = uniqueMarkets.filter((market) =>
     market.name.toLowerCase().includes(search.toLowerCase()) ||
     market.location.toLowerCase().includes(search.toLowerCase())
   );
@@ -107,6 +118,13 @@ export const MarketList = () => {
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-5 py-4 text-white">
                     <p className="text-sm uppercase tracking-[0.2em] text-gray-200">Market</p>
                     <h2 className="text-xl font-semibold leading-tight">{market.name}</h2>
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {(market.specialties || ['General', 'Food']).slice(0, 2).map(spec => (
+                        <span key={spec} className="px-2 py-0.5 bg-white/20 backdrop-blur-sm rounded text-[10px] uppercase font-bold tracking-wider">
+                          {spec}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 </div>
 

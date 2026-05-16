@@ -146,6 +146,15 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
        };
        setUser(userData);
        setIsEmailVerified(false);
+
+       // Automatically send verification email after registration
+       try {
+         await account.createVerification(`${window.location.origin}/verify`);
+         console.log('Verification email sent automatically after registration');
+       } catch (verifyError) {
+         console.warn('Could not send verification email:', verifyError);
+         // Don't throw — registration itself succeeded
+       }
      } catch (error: any) {
        console.error('Registration failed:', error);
        // Provide more specific error messages

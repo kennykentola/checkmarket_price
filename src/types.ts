@@ -18,6 +18,10 @@ export interface Market {
   name: string;
   location: string;
   image?: string;
+  description?: string;
+  specialties?: string[];
+  operatingHours?: string;
+  established?: string;
 }
 
 export interface Category {

@@ -10,6 +10,8 @@ export const Register = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState<UserRole>(UserRole.BUYER);
+  const [error, setError] = useState('');
+  const [verificationSent, setVerificationSent] = useState(false);
   const { register, isLoading } = useAuth();
   const navigate = useNavigate();
 
@@ -28,12 +30,17 @@ export const Register = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     try {
       await register(name, email, password, role);
-      navigate(getRedirectPath(role));
-    } catch (error) {
-      console.error('Registration failed:', error);
-      // Handle error (show message)
+      setVerificationSent(true);
+      // Redirect after a short delay so user sees the verification message
+      setTimeout(() => {
+        navigate(getRedirectPath(role));
+      }, 3000);
+    } catch (err: any) {
+      console.error('Registration failed:', err);
+      setError(err.message || 'Registration failed. Please try again.');
     }
   };
 
@@ -53,6 +60,36 @@ export const Register = () => {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+          {/* Verification Email Sent Banner */}
+          {verificationSent && (
+            <div className="mb-6 rounded-lg bg-green-50 border border-green-200 p-4">
+              <div className="flex items-start">
+                <svg className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div className="ml-3">
+                  <h3 className="text-sm font-semibold text-green-800">Account created successfully!</h3>
+                  <p className="text-sm text-green-700 mt-1">
+                    A verification email has been sent to <strong>{email}</strong>. Please check your inbox and click the link to verify your email address.
+                  </p>
+                  <p className="text-xs text-green-600 mt-2">Redirecting you to the dashboard...</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Error Banner */}
+          {error && (
+            <div className="mb-6 rounded-lg bg-red-50 border border-red-200 p-4">
+              <div className="flex items-start">
+                <svg className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p className="ml-3 text-sm text-red-700">{error}</p>
+              </div>
+            </div>
+          )}
+
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-700">
@@ -142,10 +179,10 @@ export const Register = () => {
             <div>
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={isLoading || verificationSent}
                 className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
               >
-                {isLoading ? 'Creating account...' : 'Create account'}
+                {isLoading ? 'Creating account...' : verificationSent ? 'Account Created ✓' : 'Create account'}
               </button>
             </div>
           </form>
