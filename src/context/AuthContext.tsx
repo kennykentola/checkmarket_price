@@ -129,7 +129,11 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
         // Log activity
         api.logActivity({
           userId: data.user.id,
+          userName: data.user.user_metadata?.full_name || data.user.email?.split('@')[0] || 'Unknown',
+          userEmail: data.user.email || 'Unknown',
           action: 'login',
+          description: `User logged in to the system via Supabase`,
+          timestamp: new Date().toISOString(),
           details: { email: data.user.email }
         }).catch(console.error);
       }
