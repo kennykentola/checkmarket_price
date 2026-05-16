@@ -23,16 +23,13 @@ const categories = [
 ];
 
 const markets = [
-  { name: 'Bodija Market', location: 'Ibadan, Oyo' },
-  { name: 'Mile 12 Market', location: 'Ketu, Lagos' },
-  { name: 'Dugbe Market', location: 'Ibadan, Oyo' },
-  { name: 'Wuse Market', location: 'Abuja, FCT' },
-  { name: 'Onitsha Main Market', location: 'Onitsha, Anambra' },
-  { name: 'Ariaria International Market', location: 'Aba, Abia' },
-  { name: 'Gbagi Market', location: 'Ibadan, Oyo' },
-  { name: 'Oja Oba Market', location: 'Ibadan, Oyo' },
-  { name: 'Singa Market', location: 'Kano, Kano' },
-  { name: 'Oil Mill Market', location: 'Port Harcourt, Rivers' }
+  { name: 'Bodija Market', location: 'Ibadan, Oyo', specialties: ['Grains', 'Tubers', 'Livestock'] },
+  { name: 'Dugbe Market', location: 'Ibadan, Oyo', specialties: ['Electronics', 'Clothing', 'Food items'] },
+  { name: 'Oja Oba Market', location: 'Ibadan, Oyo', specialties: ['Traditional items', 'Perishables', 'Spices'] },
+  { name: 'Gbagi Market', location: 'Ibadan, Oyo', specialties: ['Textiles', 'Clothing', 'Accessories'] },
+  { name: 'Sabo Market', location: 'Ibadan, Oyo', specialties: ['Onions', 'Grains', 'Northern produce'] },
+  { name: 'Apata Market', location: 'Ibadan, Oyo', specialties: ['Perishables', 'Local produce', 'General goods'] },
+  { name: 'Akowonjo Market', location: 'Oyo Town, Oyo', specialties: ['Foodstuffs', 'Local crafts'] }
 ];
 
 const commodities = [
