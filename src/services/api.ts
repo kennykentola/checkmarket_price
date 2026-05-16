@@ -19,6 +19,8 @@ interface ApiService {
   getMarkets: () => Promise<Market[]>;
   getMarketById: (id: string) => Promise<Market | undefined>;
   getCommodities: () => Promise<Commodity[]>;
+  getCommodity: (id: string) => Promise<Commodity>;
+  getCommodityPrices: (commodityId: string) => Promise<PriceEntry[]>;
   getCategories: () => Promise<Category[]>;
   getLatestPrices: () => Promise<PriceDataExpanded[]>;
   getTraderHistory: (traderId: string) => Promise<PriceDataExpanded[]>;
@@ -61,9 +63,21 @@ const mockApi: ApiService = {
   },
   getCommodities: async () => {
     const response = await databases.listDocuments(DATABASE_ID, COLLECTION_COMMODITIES, [
-      Query.limit(30)
+      Query.limit(100)
     ]);
     return response.documents as unknown as Commodity[];
+  },
+  getCommodity: async (id: string) => {
+    const response = await databases.getDocument(DATABASE_ID, COLLECTION_COMMODITIES, id);
+    return response as unknown as Commodity;
+  },
+  getCommodityPrices: async (commodityId: string) => {
+    const response = await databases.listDocuments(DATABASE_ID, COLLECTION_PRICES, [
+      Query.equal('commodityId', commodityId),
+      Query.orderDesc('dateSubmitted'),
+      Query.limit(50)
+    ]);
+    return response.documents as unknown as PriceEntry[];
   },
   getCategories: async () => {
     const response = await databases.listDocuments(DATABASE_ID, COLLECTION_CATEGORIES);

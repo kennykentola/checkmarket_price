@@ -9,6 +9,7 @@ import {
   MapPinIcon,
   CurrencyDollarIcon
 } from '@heroicons/react/24/outline';
+import { getItemImage } from '../utils/imageHelpers';
 
 export const DailyMarketTrends = () => {
   const [trendingPrices, setTrendingPrices] = useState<PriceDataExpanded[]>([]);
@@ -85,15 +86,15 @@ export const DailyMarketTrends = () => {
         </div>
 
         {/* Period Selector */}
-        <div className="flex space-x-2">
+        <div className="flex flex-wrap items-center gap-2 mt-2 sm:mt-0">
           {[1, 3, 7, 14, 100].map((days) => (
             <button
               key={days}
               onClick={() => setSelectedPeriod(days)}
-              className={`px-3 py-1 text-sm rounded-md transition-colors ${
+              className={`px-3 py-1.5 text-sm rounded-md transition-all border ${
                 selectedPeriod === days
-                  ? 'bg-indigo-100 text-indigo-700 border border-indigo-300'
-                  : 'bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100'
+                  ? 'bg-indigo-600 text-white border-indigo-600'
+                  : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
               }`}
             >
               {days === 1 ? '1 Day' : `${days} Days`}
@@ -138,17 +139,11 @@ export const DailyMarketTrends = () => {
                     className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg p-4 border border-indigo-200 hover:shadow-md transition-all block"
                   >
                     <div className="flex items-start space-x-3 mb-3">
-                      {item.commodityImage ? (
-                        <img
-                          src={item.commodityImage}
-                          alt={item.commodityName}
-                          className="w-12 h-12 rounded-lg object-cover border border-gray-200 flex-shrink-0"
-                        />
-                      ) : (
-                        <div className="w-12 h-12 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                          <CurrencyDollarIcon className="h-6 w-6 text-indigo-600" />
-                        </div>
-                      )}
+                      <img
+                        src={getItemImage(item.commodityName, item.commodityCategory, item.commodityImage)}
+                        alt={item.commodityName}
+                        className="w-12 h-12 rounded-lg object-cover border border-gray-200 flex-shrink-0"
+                      />
                       <div className="flex-1 min-w-0">
                         <h4 className="font-semibold text-gray-900 text-sm leading-tight truncate">
                           {item.commodityName}
@@ -195,17 +190,11 @@ export const DailyMarketTrends = () => {
                     className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors border border-gray-200 block"
                   >
                     <div className="flex items-start space-x-3 mb-3">
-                      {item.commodityImage ? (
-                        <img
-                          src={item.commodityImage}
-                          alt={item.commodityName}
-                          className="w-10 h-10 rounded-lg object-cover border border-gray-200 flex-shrink-0"
-                        />
-                      ) : (
-                        <div className="w-10 h-10 rounded-lg bg-gray-200 flex items-center justify-center flex-shrink-0">
-                          <CurrencyDollarIcon className="h-5 w-5 text-gray-500" />
-                        </div>
-                      )}
+                      <img
+                        src={getItemImage(item.commodityName, item.commodityCategory, item.commodityImage)}
+                        alt={item.commodityName}
+                        className="w-10 h-10 rounded-lg object-cover border border-gray-200 flex-shrink-0"
+                      />
                       <div className="flex-1 min-w-0">
                         <h4 className="font-semibold text-gray-900 text-sm leading-tight">
                           {item.commodityName}

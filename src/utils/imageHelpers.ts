@@ -7,8 +7,8 @@ export const getItemImage = (name: string, category: string = 'Other', customIma
     if (customImage.startsWith('http') || customImage.startsWith('data:')) {
       return customImage;
     }
-    // Use Cloud Name from environment variables, fallback to 'marketcheck'
-    const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'marketcheck'; 
+    // Use your specific Cloudinary cloud name directly for maximum reliability
+    const cloudName = 'dfi34idu9'; 
     return `https://res.cloudinary.com/${cloudName}/image/upload/f_auto,q_auto,w_600/${customImage}`;
   }
 

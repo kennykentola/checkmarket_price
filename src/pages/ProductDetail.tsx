@@ -28,25 +28,60 @@ export const ProductDetail = () => {
 
   useEffect(() => {
     const loadProduct = async () => {
+      if (!commodityId) return;
       try {
         setLoading(true);
-        const prices = await api.getLatestPrices();
+        
+        // 1. Fetch commodity metadata directly
+        const commodity = await api.getCommodity(commodityId);
+        
+        // 2. Fetch price entries using the new service method
+        const priceEntries = await api.getCommodityPrices(commodityId);
+        
+        // 3. Map to PriceDataExpanded format
+        const markets = await api.getMarkets();
+        const expandedPrices = priceEntries.map(p => {
+          const m = markets.find(mark => mark.$id === p.marketId);
+          return {
+            ...p,
+            marketName: m?.name || 'Unknown Market',
+            commodityName: commodity.name,
+            commodityUnit: commodity.unit,
+            commodityCategory: commodity.category,
+            commodityImage: commodity.image
+          };
+        });
 
-        // Find the specific product
-        const found = prices.find((p: PriceDataExpanded) => p.commodityId === commodityId);
-        if (found) {
-          setProduct(found);
-          // Find all prices for this commodity across markets
-          const sameCommodity = prices.filter((p: PriceDataExpanded) => p.commodityId === commodityId);
-          setAllPrices(sameCommodity);
-          // Find related items from the same category
-          const related = prices
-            .filter((p: PriceDataExpanded) =>
-              p.commodityCategory === found.commodityCategory &&
-              p.commodityId !== commodityId
-            )
-            .slice(0, 4);
+        if (expandedPrices.length > 0) {
+          setProduct(expandedPrices[0]);
+          setAllPrices(expandedPrices);
+          
+          // Fetch related items (from same category)
+          const allCommodities = await api.getCommodities();
+          const related = allCommodities
+            .filter(c => c.category === commodity.category && c.$id !== commodityId)
+            .slice(0, 4)
+            .map(c => ({
+              commodityId: c.$id,
+              commodityName: c.name,
+              commodityCategory: c.category,
+              commodityImage: c.image,
+              price: 0, 
+              marketName: 'Various Markets'
+            } as any));
           setRelatedItems(related);
+        } else {
+          // If no prices yet, still show the commodity info
+          setProduct({
+            commodityId: commodity.$id,
+            commodityName: commodity.name,
+            commodityCategory: commodity.category,
+            commodityImage: commodity.image,
+            commodityUnit: commodity.unit,
+            price: 0,
+            marketName: 'No Data',
+            dateSubmitted: new Date().toISOString()
+          } as any);
         }
       } catch (error) {
         console.error('Failed to load product', error);

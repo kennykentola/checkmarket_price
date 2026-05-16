@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom';
 import { api } from '../../services/api';
 import { Market, Commodity, Category } from '@/types';
 import { ExternalDataSync } from '../../components/ExternalDataSync';
-import { uploadToCloudinary } from '@/utils/cloudinary';
-import { getItemImage, getMarketImage } from '@/utils/imageHelpers';
+import { uploadToCloudinary } from '../../utils/cloudinary';
+import { getItemImage, getMarketImage } from '../../utils/imageHelpers';
 import {
   BuildingStorefrontIcon,
   TagIcon,
