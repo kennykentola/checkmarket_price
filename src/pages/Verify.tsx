@@ -3,20 +3,19 @@ import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
 
 export const Verify = () => {
-  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
+  const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'pending'>('loading');
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Supabase handles the verification via the URL hash/link.
-    // When the user lands here, we just check if they are now verified.
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user?.email_confirmed_at) {
         setStatus('success');
         setTimeout(() => navigate('/dashboard'), 3000);
+      } else if (session?.user) {
+        setStatus('pending');
       } else {
-        // If not immediately verified, it might still be processing
-        setStatus('success'); // Usually the link itself completes the verify
+        setStatus('error');
       }
     };
     checkAuth();
@@ -38,13 +37,34 @@ export const Verify = () => {
                 </svg>
               </div>
               <h2 className="text-2xl font-bold text-gray-900 mb-2">Email Verified!</h2>
-              <p className="text-gray-600 mb-6">Your email has been successfully confirmed. You can now use all features of the dashboard.</p>
+              <p className="text-gray-600 mb-6">Your email has been successfully confirmed. Redirecting you to the dashboard...</p>
               <Link
                 to="/dashboard"
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
               >
                 Go to Dashboard
               </Link>
+            </>
+          )}
+
+          {status === 'pending' && (
+            <>
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 mb-4">
+                <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Check Your Email</h2>
+              <p className="text-gray-600 mb-6">We've sent a verification link to your Gmail. Please click it to activate your account.</p>
+              <div className="space-y-4">
+                <p className="text-xs text-gray-500 italic">Didn't see it? Check your Spam folder.</p>
+                <Link
+                  to="/login"
+                  className="text-indigo-600 hover:text-indigo-500 font-medium text-sm"
+                >
+                  Back to Login
+                </Link>
+              </div>
             </>
           )}
 

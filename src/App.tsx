@@ -29,10 +29,16 @@ import { UserRole } from '@/types';
 
 // Protected Route Wrapper
 const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode, allowedRoles?: UserRole[] }) => {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, isEmailVerified } = useAuth();
 
   if (isLoading) return <div className="p-10 text-center">Loading...</div>;
   if (!user) return <Navigate to="/login" />;
+  
+  // Force email verification for all protected routes
+  if (!isEmailVerified) {
+    return <Navigate to="/verify" />;
+  }
+
   if (allowedRoles && !allowedRoles.includes(user.role)) {
     return <Navigate to="/buyer/prices" />;
   }
