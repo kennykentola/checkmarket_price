@@ -42,14 +42,20 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
     const userRole = await getUserRoleByEmail(supabaseUser.email);
     const isVerified = supabaseUser.email_confirmed_at ? true : false;
     
-    setUser({
-      $id: supabaseUser.id,
-      name: supabaseUser.user_metadata?.full_name || supabaseUser.email.split('@')[0],
-      email: supabaseUser.email,
-      role: userRole
-    });
-    
     setIsEmailVerified(isVerified);
+
+    if (isVerified) {
+      setUser({
+        $id: supabaseUser.id,
+        name: supabaseUser.user_metadata?.full_name || supabaseUser.email.split('@')[0],
+        email: supabaseUser.email,
+        role: userRole
+      });
+    } else {
+      // User is logged in but NOT verified
+      setUser(null); 
+    }
+    
     console.log('User state updated. Verified:', isVerified);
   };
 
