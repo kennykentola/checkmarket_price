@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { account } from '../services/appwriteConfig';
+import { supabase } from '../services/supabaseClient';
 
 export const ForgotPassword = () => {
   const [email, setEmail] = useState('');
@@ -17,18 +17,17 @@ export const ForgotPassword = () => {
     setMessage('');
 
     try {
-      await account.createRecovery(email, `${window.location.origin}/reset-password`);
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      
+      if (error) throw error;
+      
       setIsSubmitted(true);
       setMessage('Password reset instructions have been sent to your email.');
     } catch (error: any) {
       console.error('Forgot password failed:', error);
-      if (error.code === 404) {
-        setError('No account found with this email address.');
-      } else if (error.code === 429) {
-        setError('Too many requests. Please wait a few minutes and try again.');
-      } else {
-        setError(`Failed to send reset email: ${error.message || 'Unknown error'}`);
-      }
+      setError(error.message || 'Failed to send reset email. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -55,7 +54,7 @@ export const ForgotPassword = () => {
                 </svg>
               </div>
               <p className="mt-4 text-sm text-gray-600">
-                Click the link in the email to reset your password. The link expires in 1 hour.
+                Click the link in the email to reset your password.
               </p>
               <div className="mt-6">
                 <button

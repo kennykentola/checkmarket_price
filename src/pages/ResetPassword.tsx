@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { account } from '../services/appwriteConfig';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { supabase } from '../services/supabaseClient';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 
 export const ResetPassword = () => {
@@ -10,11 +10,18 @@ export const ResetPassword = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  const userId = searchParams.get('userId');
-  const secret = searchParams.get('secret');
+  useEffect(() => {
+    // Check if we have a session (Supabase automatically logs you in via the recovery link)
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setError('No active recovery session found. Please request a new password reset link.');
+      }
+    };
+    checkSession();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,64 +37,23 @@ export const ResetPassword = () => {
       return;
     }
 
-    if (!userId || !secret) {
-      setError('Invalid reset link. Please request a new password reset.');
-      return;
-    }
-
     setIsLoading(true);
 
     try {
-      await account.updateRecovery(userId, secret, password);
+      const { error } = await supabase.auth.updateUser({
+        password: password
+      });
+      
+      if (error) throw error;
+      
       setIsSuccess(true);
     } catch (error: any) {
       console.error('Reset password failed:', error);
-      if (error.code === 400) {
-        setError('Invalid or expired reset link. Please request a new password reset.');
-      } else if (error.code === 429) {
-        setError('Too many requests. Please wait a few minutes and try again.');
-      } else {
-        setError(`Failed to reset password: ${error.message || 'Unknown error'}`);
-      }
+      setError(error.message || 'Failed to reset password. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
-
-  if (!userId || !secret) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-        <div className="sm:mx-auto sm:w-full sm:max-w-md">
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Invalid Reset Link
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            The reset link is invalid or has expired.
-          </p>
-        </div>
-        <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-          <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-            <div className="text-center">
-              <Link
-                to="/forgot-password"
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
-              >
-                Request New Reset Link
-              </Link>
-              <div className="mt-4">
-                <Link
-                  to="/login"
-                  className="text-sm text-indigo-600 hover:text-indigo-500"
-                >
-                  Back to Login
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   if (isSuccess) {
     return (
@@ -132,12 +98,17 @@ export const ResetPassword = () => {
           {error && (
             <div className="mb-4 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
               {error}
+              {error.includes('recovery session') && (
+                <div className="mt-2">
+                  <Link to="/forgot-password" title="Request new link" className="text-indigo-600 hover:text-indigo-500 font-medium">Request new link</Link>
+                </div>
+              )}
             </div>
           )}
           
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="password" title="New Password" className="block text-sm font-medium text-gray-700">
                 New Password
               </label>
               <div className="mt-1 relative">
@@ -154,6 +125,7 @@ export const ResetPassword = () => {
                 />
                 <button
                   type="button"
+                  title={showPassword ? 'Hide password' : 'Show password'}
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
                   onClick={() => setShowPassword(!showPassword)}
                 >
@@ -167,7 +139,7 @@ export const ResetPassword = () => {
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="confirmPassword" title="Confirm New Password" className="block text-sm font-medium text-gray-700">
                 Confirm New Password
               </label>
               <div className="mt-1">
@@ -188,7 +160,7 @@ export const ResetPassword = () => {
             <div>
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={isLoading || !!error.includes('recovery session')}
                 className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
               >
                 {isLoading ? 'Resetting...' : 'Reset Password'}

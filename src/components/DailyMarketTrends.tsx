@@ -38,7 +38,7 @@ export const DailyMarketTrends = () => {
       } catch (err: any) {
         console.error("Failed to load trending prices", err);
         if (err.code === 402 || err.message?.includes('limit')) {
-          setError("Appwrite Database Quota Exceeded. Please upgrade your plan in the Appwrite Console.");
+          setError("Database Connection Issue. Please try again later.");
         } else {
           setError("Failed to load market trends. Please try again later.");
         }

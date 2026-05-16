@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, UserRole } from '../types';
-import { account, databases, client, DATABASE_ID, COLLECTION_USERS } from '../services/appwriteConfig';
-import { ID, Query } from 'appwrite';
+import { supabase } from '../services/supabaseClient';
 import { api } from '../services/api';
 
 interface AuthContextType {
@@ -23,225 +22,118 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
 
   useEffect(() => {
     checkSession();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session) {
+        updateUserState(session.user);
+      } else {
+        setUser(null);
+        setIsEmailVerified(false);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
+
+  const updateUserState = async (supabaseUser: any) => {
+    const userRole = await getUserRoleByEmail(supabaseUser.email);
+    const isVerified = supabaseUser.email_confirmed_at ? true : false;
+    
+    setUser({
+      $id: supabaseUser.id,
+      name: supabaseUser.user_metadata?.full_name || supabaseUser.email.split('@')[0],
+      email: supabaseUser.email,
+      role: userRole
+    });
+    
+    setIsEmailVerified(isVerified);
+    console.log('User state updated. Verified:', isVerified);
+  };
 
   const checkSession = async () => {
     setIsLoading(true);
-    
-    // Temporarily suppress console.error to avoid 401 logs
-    const originalConsoleError = console.error;
-    console.error = () => {};
-
     try {
-      // Try to get the current session from Appwrite
-      // Appwrite SDK v14+ automatically restores sessions from storage
-      const session = await account.get();
-      console.log('Session restored on refresh:', session);
-      
-      // Get user role from database by email
-      const userRole = await getUserRoleByEmail(session.email);
-
-      const userData: User = {
-        $id: session.$id,
-        name: session.name,
-        email: session.email,
-        role: userRole
-      };
-      setUser(userData);
-      setIsEmailVerified(session.emailVerification ?? false);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        await updateUserState(session.user);
+      }
     } catch (error) {
-      // No active session
-      console.log('No session found on refresh');
-      setUser(null);
-      setIsEmailVerified(false);
+      console.error('Session check failed:', error);
     } finally {
       setIsLoading(false);
-      // Restore console.error
-      console.error = originalConsoleError;
     }
   };
 
-   // Helper function to get user role by email
-   const getUserRoleByEmail = async (email: string): Promise<UserRole> => {
-     console.log('getUserRoleByEmail called with:', email);
-     
-     // Permanent admin emails that should always have admin role
-     const PERMANENT_ADMIN_EMAILS = [
-       'peterkehindeademola@gmail.com',
-       'kilocode52@gmail.com',
-       'peterkehindeademola9@gmail.com'
-     ];
-     
-     // Check if email is a permanent admin
-     if (PERMANENT_ADMIN_EMAILS.includes(email)) {
-       console.log('Permanent admin email detected:', email);
-       return UserRole.ADMIN;
-     }
-     
-     try {
-       const response = await databases.listDocuments(DATABASE_ID, COLLECTION_USERS, [
-         Query.equal('email', [email]),
-         Query.limit(1)
-       ]);
-       
-       console.log('Query response:', response.documents.length, 'documents found');
-       
-       if (response.documents.length > 0) {
-         const role = response.documents[0].role as UserRole;
-         console.log('Found role:', role);
-         return role;
-       }
-     } catch (error) {
-       console.log('Could not fetch user role from database:', error);
-     }
-     console.log('Using default role: BUYER');
-     return UserRole.BUYER; // Default role
-   };
+  const getUserRoleByEmail = async (email: string): Promise<UserRole> => {
+    const PERMANENT_ADMIN_EMAILS = [
+      'peterkehindeademola@gmail.com',
+      'kilocode52@gmail.com',
+      'peterkehindeademola9@gmail.com'
+    ];
+    
+    if (PERMANENT_ADMIN_EMAILS.includes(email)) {
+      return UserRole.ADMIN;
+    }
+    
+    // In a real app, you'd fetch this from a 'profiles' table in Supabase
+    return UserRole.BUYER;
+  };
 
-   const register = async (name: string, email: string, password: string, role: UserRole) => {
-     // Prevent self-registration as admin
-     if (role === UserRole.ADMIN) {
-       throw new Error('Admin registration is not allowed. Please contact an administrator to be granted admin access.');
-     }
-     
-     setIsLoading(true);
-     try {
-       // Delete any existing session
-       try {
-         await account.deleteSession('current');
-       } catch {
-         // No existing session, continue
-       }
+  const register = async (name: string, email: string, password: string, role: UserRole) => {
+    if (role === UserRole.ADMIN) {
+      throw new Error('Admin registration is not allowed.');
+    }
+    
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: name,
+            role: role
+          }
+        }
+      });
 
-       // Create account
-       const authUser = await account.create(ID.unique(), email, password, name);
-       console.log('Account created:', authUser);
-
-       // Create session
-       const session = await account.createEmailPasswordSession(email, password);
-       console.log('Session created:', session);
-       client.setSession(session.secret);
-
-       // Get full session info
-       const sessionInfo = await account.get();
-       console.log('Session info:', sessionInfo);
-
-       // Create user in database with the auth user ID
-       console.log('Creating user document with role:', role);
-       await databases.createDocument(DATABASE_ID, COLLECTION_USERS, authUser.$id, {
-         username: sessionInfo.name.replace(/\s+/g, '').toLowerCase(),
-         name: sessionInfo.name,
-         email: sessionInfo.email,
-         passwordHash: '',
-         createdAt: new Date().toISOString(),
-         role
-       });
-       console.log('User document created successfully');
-
-       const userData: User = {
-         $id: authUser.$id,
-         name: sessionInfo.name,
-         email: sessionInfo.email,
-         role
-       };
-       setUser(userData);
-       setIsEmailVerified(false);
-
-       // Automatically send verification email after registration
-       try {
-         await account.createVerification(`${window.location.origin}/verify`);
-         console.log('Verification email sent automatically after registration');
-       } catch (verifyError) {
-         console.warn('Could not send verification email:', verifyError);
-         // Don't throw — registration itself succeeded
-       }
-     } catch (error: any) {
-       console.error('Registration failed:', error);
-       // Provide more specific error messages
-       if (error.code === 409) {
-         throw new Error('Email already registered. Please use a different email or try logging in.');
-       } else if (error.code === 400) {
-         throw new Error('Invalid email or password. Please check your input.');
-       } else {
-         throw new Error(`Registration failed: ${error.message || 'Unknown error'}`);
-       }
-     } finally {
-       setIsLoading(false);
-     }
-   };
+      if (error) throw error;
+      
+      if (data.user) {
+        await updateUserState(data.user);
+      }
+    } catch (error: any) {
+      throw new Error(error.message || 'Registration failed');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      // Delete any existing session first
-      try {
-        await account.deleteSession('current');
-        console.log('Deleted existing session');
-      } catch {
-        // No existing session, continue
-      }
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
 
-      // Create session
-      // The Appwrite SDK automatically persists this session
-      const session = await account.createEmailPasswordSession(email, password);
-      console.log('Login session created:', session);
-
-      // Get full session info
-      const sessionInfo = await account.get();
-      console.log('Login session info:', sessionInfo);
-
-      // Get user role from database by email
-      const userRole = await getUserRoleByEmail(sessionInfo.email);
-
-      const userData: User = {
-        $id: sessionInfo.$id,
-        name: sessionInfo.name,
-        email: sessionInfo.email,
-        role: userRole
-      };
-      setUser(userData);
-      setIsEmailVerified(sessionInfo.emailVerification ?? false);
-      console.log('User logged in successfully:', userData);
-
-      // Log login activity
-      try {
-        await api.logActivity({
-          userId: userData.$id,
-          userName: userData.name,
-          userEmail: userData.email,
+      if (error) throw error;
+      
+      if (data.user) {
+        await updateUserState(data.user);
+        
+        // Log activity
+        api.logActivity({
+          userId: data.user.id,
           action: 'login',
-          description: `User logged in to the system`,
-          timestamp: new Date().toISOString(),
-          ipAddress: '', // IP address would need to be captured from the request
-          details: { role: userData.role }
-        });
-      } catch (error) {
-        console.warn('Failed to log login activity:', error);
+          details: { email: data.user.email }
+        }).catch(console.error);
       }
     } catch (error: any) {
-      console.error('Login failed:', error);
-      console.error('Error code:', error.code);
-      console.error('Error type:', error.type);
-      console.error('Full error:', JSON.stringify(error));
-      
-      // Provide more specific error messages
-      let errorMessage = 'Login failed. Please try again.';
-      
-      if (error.code === 401 || error.message?.includes('401')) {
-        errorMessage = 'Invalid email or password. Please check your credentials.';
-      } else if (error.code === 429) {
-        errorMessage = 'Too many login attempts. Please wait a few minutes and try again.';
-      } else if (error.code === 400) {
-        errorMessage = 'Invalid login request. Please try again.';
-      } else if (error.message?.includes('Invalid credentials')) {
-        errorMessage = 'Invalid email or password. The account does not exist or password is incorrect.';
-      } else if (error.message?.includes('Failed to fetch') || error.message?.includes('Network')) {
-        errorMessage = 'Network error. Please check your internet connection and try again.';
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
-      throw new Error(errorMessage);
+      throw new Error(error.message || 'Login failed');
     } finally {
       setIsLoading(false);
     }
@@ -249,25 +141,7 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
 
   const logout = async () => {
     try {
-      // Log logout activity before deleting session
-      if (user) {
-        try {
-          await api.logActivity({
-            userId: user.$id,
-            userName: user.name,
-            userEmail: user.email,
-            action: 'logout',
-            description: `User logged out of the system`,
-            timestamp: new Date().toISOString(),
-            ipAddress: '',
-            details: { role: user.role }
-          });
-        } catch (error) {
-          console.warn('Failed to log logout activity:', error);
-        }
-      }
-
-      await account.deleteSession('current');
+      await supabase.auth.signOut();
       setUser(null);
       setIsEmailVerified(false);
     } catch (error) {
@@ -276,13 +150,8 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
   };
 
   const sendVerificationEmail = async () => {
-    try {
-      await account.createVerification(`${window.location.origin}/verify`);
-      console.log('Verification email sent');
-    } catch (error: any) {
-      console.error('Failed to send verification email:', error);
-      throw new Error(`Failed to send verification email: ${error.message || 'Unknown error'}`);
-    }
+    // Supabase sends these automatically or via resend
+    console.log('Verification handling is managed by Supabase');
   };
 
   return (

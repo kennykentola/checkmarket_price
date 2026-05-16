@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
-    "appwrite": "^25.0.0",
+    "@supabase/supabase-js": "^2.105.4",
     "dotenv": "^17.2.3",
     "node-appwrite": "^21.1.0",
     "react": "^19.2.1",

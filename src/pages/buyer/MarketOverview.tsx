@@ -21,7 +21,7 @@ export const MarketOverview = () => {
     } catch (err: any) {
       console.error("Failed to fetch prices", err);
       if (err.code === 402 || err.message?.includes('limit')) {
-        setError("Database Quota Exceeded. The system has hit its daily read limit on Appwrite.");
+        setError("Database Connection Issue. The system is currently unable to load market data.");
       } else {
         setError("Failed to load prices. Please try again later.");
       }
