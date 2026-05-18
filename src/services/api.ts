@@ -250,17 +250,32 @@ export const api: ApiService = {
   logActivity: async (activity) => {
     const { data, error } = await supabase.from('activities').insert({
         user_id: activity.userId,
+        user_name: activity.userName,
+        user_email: activity.userEmail,
         action: activity.action,
+        description: activity.description,
         details: typeof activity.details === 'object' ? JSON.stringify(activity.details) : String(activity.details)
     }).select().single();
     if (error) throw error;
-    return { ...data, $id: data.id } as unknown as Activity;
+    return { 
+      ...data, 
+      $id: data.id,
+      userName: data.user_name,
+      userEmail: data.user_email,
+      description: data.description
+    } as unknown as Activity;
   },
   getActivityLog: async (userId) => {
     const query = supabase.from('activities').select('*').order('timestamp', { ascending: false });
     if (userId) query.eq('user_id', userId);
     const { data, error } = await query;
     if (error) throw error;
-    return data.map(a => ({ ...a, $id: a.id })) as unknown as Activity[];
+    return data.map(a => ({ 
+      ...a, 
+      $id: a.id,
+      userName: a.user_name || 'Unknown User',
+      userEmail: a.user_email || '',
+      description: a.description || ''
+    })) as unknown as Activity[];
   }
 };

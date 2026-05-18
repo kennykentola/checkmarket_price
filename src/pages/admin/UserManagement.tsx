@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../services/api';
 import { User, UserRole } from '@/types';
+import { useAuth } from '../../context/AuthContext';
 import {
   UsersIcon,
   TrashIcon,
@@ -13,9 +14,11 @@ import {
 } from '@heroicons/react/24/outline';
 
 export const UserManagement = () => {
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+  const isSuperAdmin = currentUser?.email === 'peterkehindeademola@gmail.com';
 
   const loadUsers = async () => {
     try {
@@ -38,30 +41,30 @@ export const UserManagement = () => {
     setTimeout(() => setMsg(null), 3000);
   };
 
-   const handleDeleteUser = async (userId: string, userName: string) => {
-     if (!window.confirm(`Are you sure you want to delete user "${userName}"? This action cannot be undone.`)) return;
+  const handleDeleteUser = async (userId: string, userName: string) => {
+    if (!window.confirm(`Are you sure you want to delete user "${userName}"? This action cannot be undone.`)) return;
 
-     try {
-       await api.deleteUser(userId);
-       showNotification(`User "${userName}" deleted successfully`, 'success');
-       loadUsers(); // Refresh the list
-     } catch (error) {
-       console.error("Failed to delete user", error);
-       showNotification('Failed to delete user. Please try again.', 'error');
-     }
-   };
+    try {
+      await api.deleteUser(userId);
+      showNotification(`User "${userName}" deleted successfully`, 'success');
+      loadUsers(); // Refresh the list
+    } catch (error) {
+      console.error("Failed to delete user", error);
+      showNotification('Failed to delete user. Please try again.', 'error');
+    }
+  };
 
-   const handleRoleChange = async (userId: string, newRole: UserRole) => {
-     try {
-       await api.updateUserRole(userId, newRole);
-       const roleText = newRole === UserRole.ADMIN ? 'granted admin access' : 'removed admin access';
-       showNotification(`User role updated successfully - ${roleText}`, 'success');
-       loadUsers(); // Refresh the list
-     } catch (error) {
-       console.error("Failed to update user role", error);
-       showNotification('Failed to update user role. Please try again.', 'error');
-     }
-   };
+  const handleRoleChange = async (userId: string, newRole: UserRole) => {
+    try {
+      await api.updateUserRole(userId, newRole);
+      const roleText = newRole === UserRole.ADMIN ? 'granted admin access' : `updated to ${newRole.toLowerCase()}`;
+      showNotification(`User role updated successfully - ${roleText}`, 'success');
+      loadUsers(); // Refresh the list
+    } catch (error) {
+      console.error("Failed to update user role", error);
+      showNotification('Failed to update user role. Please try again.', 'error');
+    }
+  };
 
   const getRoleIcon = (role: UserRole) => {
     switch (role) {
@@ -165,44 +168,61 @@ export const UserManagement = () => {
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleBadgeColor(user.role)}`}>
-                      {getRoleIcon(user.role)}
-                      <span className="ml-1 capitalize">{user.role.toLowerCase()}</span>
-                    </span>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {isSuperAdmin ? (
+                      <select
+                        value={user.role}
+                        onChange={(e) => handleRoleChange(user.$id, e.target.value as UserRole)}
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${getRoleBadgeColor(user.role)} border border-gray-300 focus:ring-2 focus:ring-indigo-500 cursor-pointer`}
+                        aria-label={`Change role for ${user.name || user.email}`}
+                        title="Select User Role"
+                      >
+                        <option value={UserRole.BUYER}>Buyer</option>
+                        <option value={UserRole.TRADER}>Trader</option>
+                        <option value={UserRole.FARMER}>Farmer</option>
+                        <option value={UserRole.ADMIN}>Admin</option>
+                      </select>
+                    ) : (
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleBadgeColor(user.role)}`}>
+                        {getRoleIcon(user.role)}
+                        <span className="ml-1 capitalize">{user.role.toLowerCase()}</span>
+                      </span>
+                    )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {user.$createdAt ? new Date(user.$createdAt).toLocaleDateString() : 'Unknown'}
                   </td>
-                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                     <div className="flex items-center justify-end space-x-2">
-                       <Link
-                         to={`/admin/activity?userId=${user.$id}`}
-                         className="text-indigo-600 hover:text-indigo-900 p-1 rounded-full hover:bg-indigo-50 transition-colors"
-                         title="View Activity"
-                       >
-                         <EyeIcon className="h-4 w-4" />
-                       </Link>
-                       <button
-                         onClick={() => handleRoleChange(user.$id, user.role === UserRole.ADMIN ? UserRole.BUYER : UserRole.ADMIN)}
-                         className={`text-gray-400 hover:text-${user.role === UserRole.ADMIN ? 'red' : 'purple'}-500 p-1 rounded-full hover:bg-${user.role === UserRole.ADMIN ? 'red' : 'purple'}-50 transition-colors`}
-                         title={user.role === UserRole.ADMIN ? 'Remove Admin' : 'Make Admin'}
-                       >
-                         {user.role === UserRole.ADMIN ? (
-                           <TrashIcon className="h-4 w-4" />
-                         ) : (
-                           <ShieldCheckIcon className="h-4 w-4" />
-                         )}
-                       </button>
-                       <button
-                         onClick={() => handleDeleteUser(user.$id, user.name || user.email)}
-                         className="text-gray-400 hover:text-red-500 p-1 rounded-full hover:bg-red-50 transition-colors"
-                         title="Delete User"
-                       >
-                         <TrashIcon className="h-4 w-4" />
-                       </button>
-                     </div>
-                   </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <div className="flex items-center justify-end space-x-2">
+                      <Link
+                        to={`/admin/activity?userId=${user.$id}`}
+                        className="text-indigo-600 hover:text-indigo-900 p-1 rounded-full hover:bg-indigo-50 transition-colors"
+                        title="View Activity"
+                      >
+                        <EyeIcon className="h-4 w-4" />
+                      </Link>
+                      {isSuperAdmin && (
+                        <button
+                          onClick={() => handleRoleChange(user.$id, user.role === UserRole.ADMIN ? UserRole.BUYER : UserRole.ADMIN)}
+                          className={`text-gray-400 hover:text-${user.role === UserRole.ADMIN ? 'red' : 'purple'}-500 p-1 rounded-full hover:bg-${user.role === UserRole.ADMIN ? 'red' : 'purple'}-50 transition-colors`}
+                          title={user.role === UserRole.ADMIN ? 'Remove Admin' : 'Make Admin'}
+                        >
+                          {user.role === UserRole.ADMIN ? (
+                            <TrashIcon className="h-4 w-4" />
+                          ) : (
+                            <ShieldCheckIcon className="h-4 w-4" />
+                          )}
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleDeleteUser(user.$id, user.name || user.email)}
+                        className="text-gray-400 hover:text-red-500 p-1 rounded-full hover:bg-red-50 transition-colors"
+                        title="Delete User"
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>

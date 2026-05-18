@@ -39,7 +39,7 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
   }, []);
 
   const updateUserState = async (supabaseUser: any) => {
-    const userRole = await getUserRoleByEmail(supabaseUser.email);
+    const userRole = await getUserRoleByEmail(supabaseUser.email, supabaseUser.id);
     const isVerified = supabaseUser.email_confirmed_at ? true : false;
     
     setIsEmailVerified(isVerified);
@@ -68,7 +68,7 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
     }
   };
 
-  const getUserRoleByEmail = async (email: string): Promise<UserRole> => {
+  const getUserRoleByEmail = async (email: string, userId?: string): Promise<UserRole> => {
     const PERMANENT_ADMIN_EMAILS = [
       'peterkehindeademola@gmail.com',
       'kilocode52@gmail.com',
@@ -79,7 +79,21 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
       return UserRole.ADMIN;
     }
     
-    // In a real app, you'd fetch this from a 'profiles' table in Supabase
+    try {
+      if (userId) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', userId)
+          .single();
+        if (data && !error) {
+          return data.role as UserRole;
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching user role from profile:', error);
+    }
+    
     return UserRole.BUYER;
   };
 
@@ -104,6 +118,18 @@ export const AuthProvider = ({ children }: { children?: ReactNode }) => {
       if (error) throw error;
       
       if (data.user) {
+        // Create the user profile row in Supabase 'profiles' table
+        const { error: profileError } = await supabase.from('profiles').insert({
+          id: data.user.id,
+          name: name,
+          email: email,
+          role: role
+        });
+        
+        if (profileError) {
+          console.error('Failed to create database profile row:', profileError);
+        }
+        
         await updateUserState(data.user);
       }
     } catch (error: any) {
