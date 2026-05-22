@@ -30,6 +30,8 @@ interface ApiService {
   updateUserRole: (userId: string, role: UserRole) => Promise<void>;
   logActivity: (activity: Omit<Activity, '$id'>) => Promise<Activity>;
   getActivityLog: (userId?: string) => Promise<Activity[]>;
+  getPendingPrices: () => Promise<PriceDataExpanded[]>;
+  updatePriceStatus: (priceId: string, status: 'approved' | 'rejected') => Promise<void>;
 }
 
 export const api: ApiService = {
@@ -66,6 +68,7 @@ export const api: ApiService = {
       .from('prices')
       .select('*, markets(name)')
       .eq('commodity_id', commodityId)
+      .eq('status', 'approved')
       .order('date_submitted', { ascending: false });
     if (error) throw error;
     return data.map(p => ({ 
@@ -88,6 +91,7 @@ export const api: ApiService = {
         commodities (id, name, unit, category_id, image, categories(name)),
         markets (id, name)
       `)
+      .eq('status', 'approved')
       .order('date_submitted', { ascending: false })
       .limit(50);
 
@@ -208,6 +212,7 @@ export const api: ApiService = {
       .select('*')
       .eq('commodity_id', commodityId)
       .eq('market_id', marketId)
+      .eq('status', 'approved')
       .gte('date_submitted', cutoffDate.toISOString())
       .order('date_submitted', { ascending: false });
 
@@ -277,5 +282,39 @@ export const api: ApiService = {
       userEmail: a.user_email || '',
       description: a.description || ''
     })) as unknown as Activity[];
+  },
+  getPendingPrices: async () => {
+    const { data, error } = await supabase
+      .from('prices')
+      .select(`
+        *,
+        commodities (id, name, unit, category_id, image, categories(name)),
+        markets (id, name)
+      `)
+      .eq('status', 'pending')
+      .order('date_submitted', { ascending: false });
+
+    if (error) throw error;
+
+    return data.map(p => ({
+      ...p,
+      $id: p.id,
+      dateSubmitted: p.date_submitted,
+      commodityId: p.commodities.id,
+      commodityName: p.commodities.name,
+      commodityUnit: p.commodities.unit,
+      commodityCategory: p.commodities.categories?.name || 'Other',
+      commodityImage: p.commodities.image,
+      marketName: p.markets.name,
+      marketId: p.markets.id
+    })) as unknown as PriceDataExpanded[];
+  },
+  updatePriceStatus: async (priceId, status) => {
+    const { error } = await supabase
+      .from('prices')
+      .update({ status })
+      .eq('id', priceId);
+    if (error) throw error;
+    window.dispatchEvent(new CustomEvent('dataUpdated', { detail: { type: 'price' } }));
   }
 };

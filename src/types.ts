@@ -44,6 +44,7 @@ export interface PriceEntry {
   traderId: string;
   price: number;
   dateSubmitted: string; // ISO Date string
+  status?: 'pending' | 'approved' | 'rejected';
 }
 
 export interface PriceDataExpanded extends PriceEntry {
