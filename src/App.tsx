@@ -19,6 +19,7 @@ import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { MarketInventory } from './pages/admin/MarketInventory';
 import { UserManagement } from './pages/admin/UserManagement';
 import { ActivityLog } from './pages/admin/ActivityLog';
+import { PendingPrices } from './pages/admin/PendingPrices';
 import { Calculator } from './pages/Calculator';
 import { FarmerUpload } from './pages/FarmerUpload';
 import { Notifications } from './pages/Notifications';
@@ -155,6 +156,12 @@ function App() {
           <Route path="/admin/activity" element={
             <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
               <ActivityLog />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/admin/pending" element={
+            <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
+              <PendingPrices />
             </ProtectedRoute>
           } />
 

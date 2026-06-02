@@ -132,10 +132,10 @@ export const DailyMarketTrends = () => {
                 Latest Market Updates
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {featuredItems.map((item) => (
+                {featuredItems.map((item, index) => (
                   <Link
                     to={`/product/${item.commodityId}`}
-                    key={`featured-${item.commodityId}-${item.marketId}`}
+                    key={`featured-${item.commodityId}-${item.marketId}-${index}`}
                     className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg p-4 border border-indigo-200 hover:shadow-md transition-all block"
                   >
                     <div className="flex items-start space-x-3 mb-3">
@@ -183,10 +183,10 @@ export const DailyMarketTrends = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {trendingPrices.map((item) => (
+                {trendingPrices.map((item, index) => (
                   <Link
                     to={`/product/${item.commodityId}`}
-                    key={`${item.commodityId}-${item.marketId}`}
+                    key={`trending-${item.commodityId}-${item.marketId}-${index}`}
                     className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors border border-gray-200 block"
                   >
                     <div className="flex items-start space-x-3 mb-3">
